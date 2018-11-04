@@ -1,0 +1,89 @@
+syntax = "proto3";
+
+package ns1.ns2;
+
+import "ns1.ns3.proto";
+
+message Message1
+{
+	int32 reg_int32 = 1;
+
+	int64 reg_int64 = 2;
+
+	uint32 reg_uint32 = 3;
+
+	uint64 reg_uint64 = 4;
+
+	float reg_float32 = 5;
+
+	double reg_float64 = 6;
+
+	bool reg_bool = 7;
+
+	string reg_string = 8;
+
+	bytes reg_bytes = 9;
+
+	repeated int32 arr_int32 = 11;
+
+	repeated int64 arr_int64 = 12;
+
+	repeated uint32 arr_uint32 = 13;
+
+	repeated uint64 arr_uint64 = 14;
+
+	repeated float arr_float32 = 15;
+
+	repeated double arr_float64 = 16;
+
+	repeated bool arr_bool = 17;
+
+	repeated string arr_string = 18;
+
+	repeated bytes arr_bytes = 19;
+
+	Message2 reg_entity = 100;
+
+	repeated .ns1.ns3.Message3 arr_entity = 101;
+}
+
+message Message2
+{
+	int32 reg_int32 = 1;
+
+	int64 reg_int64 = 2;
+
+	uint32 reg_uint32 = 3;
+
+	uint64 reg_uint64 = 4;
+
+	float reg_float32 = 5;
+
+	double reg_float64 = 6;
+
+	bool reg_bool = 7;
+
+	string reg_string = 8;
+
+	bytes reg_bytes = 9;
+
+	repeated int32 arr_int32 = 11;
+
+	repeated int64 arr_int64 = 12;
+
+	repeated uint32 arr_uint32 = 13;
+
+	repeated uint64 arr_uint64 = 14;
+
+	repeated float arr_float32 = 15;
+
+	repeated double arr_float64 = 16;
+
+	repeated bool arr_bool = 17;
+
+	repeated string arr_string = 18;
+
+	repeated bytes arr_bytes = 19;
+
+	Message1 reg_entity = 100;
+}

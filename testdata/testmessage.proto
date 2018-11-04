@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+package testdata;
+
+message TestMessage
+{
+    int32 RegInt32 = 1;
+
+    int64 RegInt64 = 2;
+
+    uint32 RegUint32 = 3;
+
+    uint64 RegUint64 = 4;
+
+    float RegFloat32 = 5;
+
+    double RegFloat64 = 6;
+
+    bool RegBool = 7;
+
+    string RegString = 8;
+
+    bytes RegBytes = 9;
+
+    TestMessage RegEntity = 10;
+
+    repeated int32 ArrInt32 = 11;
+
+    repeated int64 ArrInt64 = 12;
+
+    repeated uint32 ArrUint32 = 13;
+
+    repeated uint64 ArrUint64 = 14;
+
+    repeated float ArrFloat32 = 15;
+
+    repeated double ArrFloat64 = 16;
+
+    repeated bool ArrBool = 17;
+
+    repeated string ArrString = 18;
+
+    repeated bytes ArrBytes = 19;
+
+    repeated TestMessage ArrEntity = 20;
+}
