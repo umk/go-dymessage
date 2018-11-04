@@ -7,8 +7,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/umk/go-testutil"
 	"github.com/stretchr/testify/require"
+	"github.com/umk/go-testutil"
 )
 
 type exporter struct {
