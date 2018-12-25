@@ -13,17 +13,21 @@ import (
 )
 
 func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
+	e := pd.NewEntity()
+	return e, s.DecodeInto(b, pd, e)
+}
+
+func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) error {
 	var data fields
 	decoder := json.NewDecoder(bytes.NewReader(b))
 	decoder.UseNumber()
 	if err := decoder.Decode(&data); err != nil {
-		return nil, err
+		return err
 	}
-	e := pd.NewEntity()
 	if err := s.setJsonFields(e, pd, data); err != nil {
-		return nil, err
+		return err
 	}
-	return e, nil
+	return nil
 }
 
 func (s *Encoder) setJsonFields(
@@ -32,6 +36,10 @@ func (s *Encoder) setJsonFields(
 	for _, f := range pd.Fields {
 		value, ok := data[f.Name]
 		if !ok {
+			if !s.IgnoreUnknown {
+				message := fmt.Sprintf("Unknown field name %s in the message", f.Name)
+				return errors.New(message)
+			}
 			continue
 		}
 		count++
@@ -47,8 +55,8 @@ func (s *Encoder) setJsonFields(
 			}
 		}
 	}
-	if !s.Relaxed && count < len(data) {
-		return errors.New("bad message")
+	if s.RequireAll && count < len(data) {
+		return errors.New("some of the fields are missing in the message")
 	}
 	return nil
 }

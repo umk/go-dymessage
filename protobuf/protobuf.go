@@ -8,9 +8,8 @@ import (
 
 type Encoder struct {
 	// Indicates whether the unknown fields must be silently skipped.
-	Relaxed bool
-	buf     Buffer
+	IgnoreUnknown bool
+	buf           Buffer
 }
 
-var BadMessageErr = errors.New("bad message")
 var RepeatedNullErr = errors.New("repeated field has null item")

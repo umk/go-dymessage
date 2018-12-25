@@ -14,7 +14,7 @@ func TestJsonEncodeDecode(t *testing.T) {
 	AssertEncodeDecode(t, def, entity)
 
 	// Converting message to JSON and back.
-	enc := &Encoder{Relaxed: false, Ident: true}
+	enc := &Encoder{IgnoreUnknown: false, Ident: true}
 	data, err := enc.Encode(entity, def)
 	require.NoError(t, err)
 

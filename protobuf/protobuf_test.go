@@ -17,7 +17,7 @@ func TestEncodeDecode(t *testing.T) {
 	AssertEncodeDecode(t, def, entity)
 
 	// Converting message to protobuf message and back.
-	enc := &Encoder{Relaxed: false}
+	enc := &Encoder{IgnoreUnknown: false}
 	data, err := enc.Encode(entity, def)
 	require.NoError(t, err)
 
