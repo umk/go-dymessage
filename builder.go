@@ -119,11 +119,11 @@ func (mb *MessageDefBuilder) addField(tag uint64, f *MessageFieldDef) {
 	// Getting an offset of the value either in the primitive values array or the
 	// references array.
 	if f.DataType.IsRefType() || f.Repeated {
-		f.Offset = mb.def.entitiesLength
-		mb.def.entitiesLength++
+		f.Offset = mb.def.EntityBufLength
+		mb.def.EntityBufLength++
 	} else {
-		f.Offset = mb.def.dataLength
-		mb.def.dataLength += f.DataType.GetSizeInBytes()
+		f.Offset = mb.def.DataBufLength
+		mb.def.DataBufLength += f.DataType.GetSizeInBytes()
 	}
 	mb.def.Fields[tag] = f
 }
@@ -133,7 +133,7 @@ func (mb *MessageDefBuilder) addField(tag uint64, f *MessageFieldDef) {
 
 func (md *MessageDef) NewEntity() *Entity {
 	return &Entity{
-		Data:     make([]byte, md.dataLength),
-		Entities: make([]*Entity, md.entitiesLength),
+		Data:     make([]byte, md.DataBufLength),
+		Entities: make([]*Entity, md.EntityBufLength),
 	}
 }

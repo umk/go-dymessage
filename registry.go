@@ -17,16 +17,16 @@ type (
 		Name      string
 		// A registry this definition belongs to.
 		Registry *Registry
+		// A collection of fields that belong to the message.
+		Fields map[uint64]*MessageFieldDef
 		// Number of bytes taken by primitive values. These doesn't
 		// include the repeated values, which are represented by a
 		// separate entity.
-		dataLength int
+		DataBufLength int
 		// Number of entities referenced by the root. The collections
 		// of entities and repeated primitive values are represented
 		// by a single entity.
-		entitiesLength int
-		// A collection of fields that belong to the message.
-		Fields map[uint64]*MessageFieldDef
+		EntityBufLength int
 	}
 
 	// Represents a single field of a message.
