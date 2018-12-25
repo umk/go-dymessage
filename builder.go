@@ -35,6 +35,7 @@ func (rb *RegistryBuilder) AddMessageDef(key interface{}) *MessageDefBuilder {
 	}
 	def.def = &MessageDef{
 		Registry: rb.registry,
+		Fields: make(map[uint64]*MessageFieldDef),
 	}
 	return def
 }
@@ -124,7 +125,7 @@ func (mb *MessageDefBuilder) addField(tag uint64, f *MessageFieldDef) {
 		f.Offset = mb.def.dataLength
 		mb.def.dataLength += f.DataType.GetSizeInBytes()
 	}
-	mb.def.Fields = append(mb.def.Fields, f)
+	mb.def.Fields[tag] = f
 }
 
 // -----------------------------------------------------------------------------

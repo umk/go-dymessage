@@ -26,7 +26,7 @@ type (
 		// by a single entity.
 		entitiesLength int
 		// A collection of fields that belong to the message.
-		Fields []*MessageFieldDef
+		Fields map[uint64]*MessageFieldDef
 	}
 
 	// Represents a single field of a message.
