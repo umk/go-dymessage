@@ -9,7 +9,7 @@ test: gen
 	go test ./...
 
 testfix: gen
-	go test -ldflags="$(TESTFIX_FLAGS)"
+	go test -ldflags="$(TESTFIX_FLAGS)" ./...
 
 $(PROTO_GO_FILES): $(PROTO_FILES)
 	protoc --proto_path=$(dir $<) --go_out=$(dir $<) $^

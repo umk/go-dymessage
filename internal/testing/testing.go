@@ -10,7 +10,9 @@ import (
 )
 
 type (
-	builder struct {
+	// Attaches the methods for the builder to create the test
+	// message definitions.
+	TestBuilder struct {
 		*RegistryBuilder
 	}
 
@@ -20,9 +22,9 @@ type (
 	}
 )
 
-func (rb *builder) createTestProto(key interface{}, ns, name string) *MessageDefBuilder {
+func (rb *TestBuilder) CreateTestProto(key interface{}, namespace, name string) *MessageDefBuilder {
 	return rb.AddMessageDef(key).
-		WithNamespace(ns).
+		WithNamespace(namespace).
 		WithName(name).
 		// regular fields
 		WithField("RegInt32", 1, DtInt32).
@@ -47,9 +49,9 @@ func (rb *builder) createTestProto(key interface{}, ns, name string) *MessageDef
 }
 
 func ArrangeEncodeDecode() (*MessageDef, *Entity) {
-	rb := builder{NewRegistryBuilder()}
+	rb := TestBuilder{NewRegistryBuilder()}
 
-	def := rb.createTestProto("message", "koala.goshawk", "Message").
+	def := rb.CreateTestProto("message", "koala.goshawk", "Message").
 		WithField("RegEntity", 10, rb.GetEntityType("message")).
 		WithArrayField("ArrEntity", 20, rb.GetEntityType("message")).
 		Build()
