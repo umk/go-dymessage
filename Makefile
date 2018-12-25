@@ -6,7 +6,7 @@ TESTFIX_FLAGS=-X 'github.com/umk/go-testutil.fix=fix'
 gen: $(PROTO_GO_FILES)
 
 test: gen
-	go test
+	go test ./...
 
 testfix: gen
 	go test -ldflags="$(TESTFIX_FLAGS)"

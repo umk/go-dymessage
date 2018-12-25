@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/umk/go-dymessage"
+	. "github.com/umk/go-dymessage"
 )
 
-func (s *Encoder) Encode(e *dymessage.Entity, pd *dymessage.MessageDef) ([]byte, error) {
+func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
 	fields := s.getJsonFields(e, pd)
 	if s.Ident {
 		return json.MarshalIndent(fields, "", "\t")
@@ -17,7 +17,7 @@ func (s *Encoder) Encode(e *dymessage.Entity, pd *dymessage.MessageDef) ([]byte,
 	}
 }
 
-func (s *Encoder) getJsonFields(e *dymessage.Entity, pd *dymessage.MessageDef) fields {
+func (s *Encoder) getJsonFields(e *Entity, pd *MessageDef) fields {
 	fields := make(fields)
 	for _, f := range pd.Fields {
 		if f.Repeated {
@@ -44,22 +44,22 @@ func (s *Encoder) getJsonFields(e *dymessage.Entity, pd *dymessage.MessageDef) f
 }
 
 func (*Encoder) encodeJsonValue(
-	value dymessage.Primitive, f *dymessage.MessageFieldDef) interface{} {
+	value Primitive, f *MessageFieldDef) interface{} {
 	var number interface{}
 	switch f.DataType {
-	case dymessage.DtInt32:
+	case DtInt32:
 		number = value.ToInt32()
-	case dymessage.DtInt64:
+	case DtInt64:
 		number = value.ToInt64()
-	case dymessage.DtUint32:
+	case DtUint32:
 		number = value.ToUint32()
-	case dymessage.DtUint64:
+	case DtUint64:
 		number = value.ToUint64()
-	case dymessage.DtFloat32:
+	case DtFloat32:
 		number = value.ToFloat32()
-	case dymessage.DtFloat64:
+	case DtFloat64:
 		number = value.ToFloat64()
-	case dymessage.DtBool:
+	case DtBool:
 		return value.ToBool()
 	default:
 		panic(f.DataType)
@@ -68,7 +68,7 @@ func (*Encoder) encodeJsonValue(
 }
 
 func (s *Encoder) encodeJsonValues(
-	e *dymessage.Entity, f *dymessage.MessageFieldDef) (result []interface{}) {
+	e *Entity, f *MessageFieldDef) (result []interface{}) {
 	data := e.Entities[f.Offset]
 	if data != nil {
 		n := len(data.Data) / f.DataType.GetSizeInBytes()
@@ -81,20 +81,20 @@ func (s *Encoder) encodeJsonValues(
 }
 
 func (s *Encoder) encodeJsonRef(
-	e *dymessage.Entity, pd *dymessage.MessageDef, f *dymessage.MessageFieldDef) interface{} {
+	e *Entity, pd *MessageDef, f *MessageFieldDef) interface{} {
 	switch f.DataType {
-	case dymessage.DtBytes:
+	case DtBytes:
 		return base64.StdEncoding.EncodeToString(e.Data)
-	case dymessage.DtString:
+	case DtString:
 		return string(e.Data)
 	default:
-		def := pd.Registry.Defs[f.DataType&^dymessage.DtEntity]
+		def := pd.Registry.Defs[f.DataType&^DtEntity]
 		return s.getJsonFields(e, def)
 	}
 }
 
 func (s *Encoder) encodeJsonRefs(
-	e *dymessage.Entity, pd *dymessage.MessageDef, f *dymessage.MessageFieldDef) (result []interface{}) {
+	e *Entity, pd *MessageDef, f *MessageFieldDef) (result []interface{}) {
 	data := e.Entities[f.Offset]
 	if data == nil {
 		return nil

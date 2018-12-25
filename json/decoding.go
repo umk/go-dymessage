@@ -9,10 +9,10 @@ import (
 	"reflect"
 	"strconv"
 
-	"github.com/umk/go-dymessage"
+	. "github.com/umk/go-dymessage"
 )
 
-func (s *Encoder) Decode(b []byte, pd *dymessage.MessageDef) (*dymessage.Entity, error) {
+func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
 	var data fields
 	decoder := json.NewDecoder(bytes.NewReader(b))
 	decoder.UseNumber()
@@ -27,7 +27,7 @@ func (s *Encoder) Decode(b []byte, pd *dymessage.MessageDef) (*dymessage.Entity,
 }
 
 func (s *Encoder) setJsonFields(
-	e *dymessage.Entity, pd *dymessage.MessageDef, data fields) error {
+	e *Entity, pd *MessageDef, data fields) error {
 	count := 0
 	for _, f := range pd.Fields {
 		value, ok := data[f.Name]
@@ -54,7 +54,7 @@ func (s *Encoder) setJsonFields(
 }
 
 func (s *Encoder) decodeJsonValue(
-	e *dymessage.Entity, f *dymessage.MessageFieldDef, value interface{}) error {
+	e *Entity, f *MessageFieldDef, value interface{}) error {
 	if f.Repeated {
 		if items, ok := value.([]interface{}); ok {
 			f.Reserve(e, len(items))
@@ -79,10 +79,7 @@ func (s *Encoder) decodeJsonValue(
 }
 
 func (s *Encoder) decodeJsonRef(
-	e *dymessage.Entity,
-	pd *dymessage.MessageDef,
-	f *dymessage.MessageFieldDef,
-	value interface{}) error {
+	e *Entity, pd *MessageDef, f *MessageFieldDef, value interface{}) error {
 	if f.Repeated {
 		if items, ok := value.([]interface{}); ok {
 			f.Reserve(e, len(items))
@@ -107,63 +104,61 @@ func (s *Encoder) decodeJsonRef(
 }
 
 func (s *Encoder) decodeEntity(
-	value interface{},
-	pd *dymessage.MessageDef,
-	f *dymessage.MessageFieldDef) (*dymessage.Reference, error) {
+	value interface{}, pd *MessageDef, f *MessageFieldDef) (*Reference, error) {
 	switch value := value.(type) {
 	case string:
 		switch f.DataType {
-		case dymessage.DtBytes:
+		case DtBytes:
 			if b, err := base64.StdEncoding.DecodeString(value); err == nil {
-				return dymessage.FromBytes(b, false), nil
+				return FromBytes(b, false), nil
 			} else {
 				return nil, err
 			}
-		case dymessage.DtString:
-			return dymessage.FromString(value), nil
+		case DtString:
+			return FromString(value), nil
 		}
 	case map[string]interface{}:
-		def := pd.Registry.Defs[f.DataType&^dymessage.DtEntity]
+		def := pd.Registry.Defs[f.DataType&^DtEntity]
 		e := def.NewEntity()
 		if err := s.setJsonFields(e, pd, value); err != nil {
 			return nil, err
 		}
-		return dymessage.FromEntity(e), nil
+		return FromEntity(e), nil
 	}
 	err := fmt.Errorf("unexpected value %q of %v", value, reflect.TypeOf(value))
 	return nil, err
 }
 
 func (*Encoder) decodePrimitive(
-	value interface{}, f *dymessage.MessageFieldDef) (dymessage.Primitive, error) {
+	value interface{}, f *MessageFieldDef) (Primitive, error) {
 	switch value := value.(type) {
 	case json.Number:
 		str := value.String()
 		switch f.DataType {
-		case dymessage.DtInt32:
+		case DtInt32:
 			value, err := strconv.ParseInt(str, 10, 32)
-			return dymessage.FromInt32(int32(value)), err
-		case dymessage.DtInt64:
+			return FromInt32(int32(value)), err
+		case DtInt64:
 			value, err := strconv.ParseInt(str, 10, 64)
-			return dymessage.FromInt64(value), err
-		case dymessage.DtUint32:
+			return FromInt64(value), err
+		case DtUint32:
 			value, err := strconv.ParseUint(str, 10, 32)
-			return dymessage.FromUint32(uint32(value)), err
-		case dymessage.DtUint64:
+			return FromUint32(uint32(value)), err
+		case DtUint64:
 			value, err := strconv.ParseUint(str, 10, 64)
-			return dymessage.FromUint64(value), err
-		case dymessage.DtFloat32:
+			return FromUint64(value), err
+		case DtFloat32:
 			value, err := strconv.ParseFloat(str, 32)
-			return dymessage.FromFloat32(float32(value)), err
-		case dymessage.DtFloat64:
+			return FromFloat32(float32(value)), err
+		case DtFloat64:
 			value, err := strconv.ParseFloat(str, 64)
-			return dymessage.FromFloat64(value), err
+			return FromFloat64(value), err
 		}
 	case bool:
-		if f.DataType == dymessage.DtBool {
-			return dymessage.FromBool(value), nil
+		if f.DataType == DtBool {
+			return FromBool(value), nil
 		}
 	}
 	err := fmt.Errorf("unexpected value %q of %v", value, reflect.TypeOf(value))
-	return dymessage.PrimitiveDefault, err
+	return PrimitiveDefault, err
 }
