@@ -35,7 +35,7 @@ func (rb *RegistryBuilder) AddMessageDef(key interface{}) *MessageDefBuilder {
 	}
 	def.def = &MessageDef{
 		Registry: rb.registry,
-		Fields: make(map[uint64]*MessageFieldDef),
+		Fields:   make(map[uint64]*MessageFieldDef),
 	}
 	return def
 }
