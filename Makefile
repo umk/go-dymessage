@@ -17,7 +17,10 @@ $(PROTO_GO_FILES): $(PROTO_FILES)
 $(PROTO_TEST_GO_FILES): $(PROTO_TEST_FILES)
 	protoc --proto_path=$(dir $<) --go_out=$(dir $<) $^
 
+format:
+	gofmt -w -s $(CURDIR)
+
 clean:
 	find $(CURDIR) -name '*.pb.go' -type f -exec rm '{}' \;
 
-.PHONY: gen test testfix clean
+.PHONY: gen test testfix format clean

@@ -21,7 +21,7 @@ type (
 )
 
 func (rb *builder) createTestProto(
-    key interface{}, ns, name string) *dymessage.MessageDefBuilder {
+	key interface{}, ns, name string) *dymessage.MessageDefBuilder {
 	return rb.AddMessageDef(key).
 		WithNamespace(ns).
 		WithName(name).
