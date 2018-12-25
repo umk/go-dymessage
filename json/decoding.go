@@ -60,9 +60,7 @@ func (s *Encoder) decodeJsonValue(
 			f.Reserve(e, len(items))
 			for i, item := range items {
 				if value, err := s.decodePrimitive(item, f); err == nil {
-					if err := f.SetValueAt(e, i, value); err != nil {
-						panic(err)
-					}
+					f.SetValueAt(e, i, value)
 				} else {
 					return err
 				}
@@ -90,9 +88,7 @@ func (s *Encoder) decodeJsonRef(
 			f.Reserve(e, len(items))
 			for i, item := range items {
 				if value, err := s.decodeEntity(item, pd, f); err == nil {
-					if err := f.SetEntityAt(e, i, value); err != nil {
-						panic(err)
-					}
+					f.SetEntityAt(e, i, value)
 				} else {
 					return err
 				}

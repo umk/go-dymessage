@@ -39,6 +39,15 @@ func (rb *RegistryBuilder) AddMessageDef(key interface{}) *MessageDefBuilder {
 	return def
 }
 
+// GetEntityType gets the data type of the field, which value is an entity. The
+// method accepts the key by which the entity is referenced in the repository
+// builder, and if necessary reserves an index for the proto definition. The
+// called is obliged to build the entity by provided key.
+func (rb *RegistryBuilder) GetEntityType(key interface{}) DataType {
+	def := rb.ensureDef(key)
+	return DtEntity | DataType(def.index)
+}
+
 func (rb *RegistryBuilder) Build() *Registry {
 	for i, def := range rb.registry.Defs {
 		if def == nil {
