@@ -2,14 +2,41 @@ package dymessage
 
 import (
 	"math"
+
+	"github.com/umk/go-dymessage/internal/impl"
 )
 
-// A generic representation of the primitive values that provides methods for
-// converting the value to any primitive type.
-type Primitive uint64
+type (
+	Entity struct{ *impl.Entity }
 
-// Attaches the conversion methods to an entity.
-type Reference Entity
+	// A generic representation of the primitive values that provides
+	// methods for converting the value to any native primitive type. The
+	// provided methods do not keep track of the correct usage, meaning that
+	// the user must correlate between the methods and the value types.
+	Primitive uint64
+
+	// A generic representation of the reference values that provides
+	// methods for converting the value to any native reference type. The
+	// provided methods do not keep track of the correct usage, meaning that
+	// the user must correlate between the methods and the value types.
+	Reference struct{ *impl.Entity }
+)
+
+// -----------------------------------------------------------------------------
+// Data types
+
+const (
+	DtInt32 impl.DataType = iota + 1
+	DtInt64
+	DtUint32
+	DtUint64
+	DtFloat32
+	DtFloat64
+	DtBool
+	DtString
+	DtBytes
+	DtEntity impl.DataType = 1 << 31
+)
 
 // -----------------------------------------------------------------------------
 // Primitive value conversions
@@ -43,25 +70,33 @@ func (p Primitive) ToBool() bool { return p != 0 }
 // -----------------------------------------------------------------------------
 // Reference value conversions
 
-func FromEntity(value *Entity) *Reference {
-	return (*Reference)(value)
+func FromEntity(value *Entity) Reference {
+	return Reference{value.Entity}
 }
 
-func FromString(value string) *Reference {
-	return (*Reference)(&Entity{Data: ([]byte)(value)})
+func FromString(value string) Reference {
+	return Reference{&impl.Entity{Data: ([]byte)(value)}}
 }
 
-func FromBytes(value []byte, clone bool) *Reference {
+func FromBytes(value []byte, clone bool) Reference {
 	data := value
 	if clone {
 		data = make([]byte, len(value))
 		copy(data, value)
 	}
-	return (*Reference)(&Entity{Data: data})
+	return Reference{&impl.Entity{Data: data}}
 }
 
-func (r *Reference) ToEntity() *Entity { return (*Entity)(r) }
-func (r *Reference) ToString() string  { return string(r.ToBytes()) }
+func (r *Reference) ToEntity() *Entity {
+	if r == nil {
+		return nil
+	}
+	return &Entity{r.Entity}
+}
+
+func (r *Reference) ToString() string {
+	return string(r.ToBytes())
+}
 
 func (r *Reference) ToBytes() []byte {
 	if r == nil {

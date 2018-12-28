@@ -1,20 +1,25 @@
 package dymessage
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/umk/go-dymessage/internal/helpers"
+	"github.com/umk/go-dymessage/internal/impl"
+)
 
 type (
 	RegistryBuilder struct {
 		defs     map[interface{}]*MessageDefBuilder
-		registry *Registry
+		registry *impl.Registry
 	}
 
 	MessageDefBuilder struct {
 		// Index of this message definition in the registry.
 		index    int
-		registry *Registry
+		registry *impl.Registry
 		// Dynamic message definition which is being built by this
 		// instance of builder.
-		def *MessageDef
+		def *impl.MessageDef
 	}
 )
 
@@ -24,7 +29,7 @@ type (
 func NewRegistryBuilder() *RegistryBuilder {
 	return &RegistryBuilder{
 		defs:     make(map[interface{}]*MessageDefBuilder),
-		registry: &Registry{},
+		registry: &impl.Registry{},
 	}
 }
 
@@ -33,9 +38,9 @@ func (rb *RegistryBuilder) AddMessageDef(key interface{}) *MessageDefBuilder {
 	if def.def != nil {
 		panic(fmt.Sprintf("entity %v has already been added at %v", key, def.index))
 	}
-	def.def = &MessageDef{
+	def.def = &impl.MessageDef{
 		Registry: rb.registry,
-		Fields:   make(map[uint64]*MessageFieldDef),
+		Fields:   make(map[uint64]*impl.MessageFieldDef),
 	}
 	return def
 }
@@ -44,18 +49,18 @@ func (rb *RegistryBuilder) AddMessageDef(key interface{}) *MessageDefBuilder {
 // method accepts the key by which the entity is referenced in the repository
 // builder, and if necessary reserves an index for the proto definition. The
 // called is obliged to build the entity by provided key.
-func (rb *RegistryBuilder) GetEntityType(key interface{}) DataType {
+func (rb *RegistryBuilder) GetEntityType(key interface{}) impl.DataType {
 	def := rb.ensureDef(key)
-	return DtEntity | DataType(def.index)
+	return DtEntity | impl.DataType(def.index)
 }
 
-func (rb *RegistryBuilder) Build() *Registry {
+func (rb *RegistryBuilder) Build() Registry {
 	for i, def := range rb.registry.Defs {
 		if def == nil {
 			panic(fmt.Sprintf("definition at %v is empty", i))
 		}
 	}
-	return rb.registry
+	return Registry{rb.registry}
 }
 
 func (rb *RegistryBuilder) ensureDef(key interface{}) *MessageDefBuilder {
@@ -86,8 +91,8 @@ func (mb *MessageDefBuilder) WithNamespace(name string) *MessageDefBuilder {
 }
 
 func (mb *MessageDefBuilder) WithField(
-	name string, tag uint64, dataType DataType) *MessageDefBuilder {
-	mb.addField(tag, &MessageFieldDef{
+	name string, tag uint64, dataType impl.DataType) *MessageDefBuilder {
+	mb.addField(tag, &impl.MessageFieldDef{
 		Name:     name,
 		DataType: dataType,
 		Tag:      tag,
@@ -97,8 +102,8 @@ func (mb *MessageDefBuilder) WithField(
 }
 
 func (mb *MessageDefBuilder) WithArrayField(
-	name string, tag uint64, dataType DataType) *MessageDefBuilder {
-	mb.addField(tag, &MessageFieldDef{
+	name string, tag uint64, dataType impl.DataType) *MessageDefBuilder {
+	mb.addField(tag, &impl.MessageFieldDef{
 		Name:     name,
 		DataType: dataType,
 		Tag:      tag,
@@ -107,33 +112,23 @@ func (mb *MessageDefBuilder) WithArrayField(
 	return mb
 }
 
-func (mb *MessageDefBuilder) Build() *MessageDef {
+func (mb *MessageDefBuilder) Build() MessageDef {
 	if mb.registry.Defs[mb.index] != nil {
 		panic(fmt.Sprintf("message definition at %v has already been built", mb.index))
 	}
 	mb.registry.Defs[mb.index] = mb.def
-	return mb.def
+	return MessageDef{mb.def}
 }
 
-func (mb *MessageDefBuilder) addField(tag uint64, f *MessageFieldDef) {
+func (mb *MessageDefBuilder) addField(tag uint64, f *impl.MessageFieldDef) {
 	// Getting an offset of the value either in the primitive values array or the
 	// references array.
-	if f.DataType.IsRefType() || f.Repeated {
+	if helpers.IsRefType(f.DataType) || f.Repeated {
 		f.Offset = mb.def.EntityBufLength
 		mb.def.EntityBufLength++
 	} else {
 		f.Offset = mb.def.DataBufLength
-		mb.def.DataBufLength += f.DataType.GetSizeInBytes()
+		mb.def.DataBufLength += helpers.GetSizeInBytes(f.DataType)
 	}
 	mb.def.Fields[tag] = f
-}
-
-// -----------------------------------------------------------------------------
-// Message definition
-
-func (md *MessageDef) NewEntity() *Entity {
-	return &Entity{
-		Data:     make([]byte, md.DataBufLength),
-		Entities: make([]*Entity, md.EntityBufLength),
-	}
 }

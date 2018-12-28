@@ -8,6 +8,7 @@ import (
 	"text/template"
 
 	. "github.com/umk/go-dymessage"
+	. "github.com/umk/go-dymessage/internal/impl"
 	. "github.com/umk/go-fslayer"
 	"github.com/umk/go-stringutil"
 )

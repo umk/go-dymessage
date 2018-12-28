@@ -2,6 +2,8 @@ package protobuf
 
 import (
 	. "github.com/umk/go-dymessage"
+	"github.com/umk/go-dymessage/internal/helpers"
+	. "github.com/umk/go-dymessage/internal/impl"
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
@@ -10,12 +12,12 @@ func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
 	for _, f := range pd.Fields {
 		var err error
 		if f.Repeated {
-			if f.DataType.IsRefType() {
+			if helpers.IsRefType(f.DataType) {
 				err = s.encodeRefs(e, pd, f)
 			} else {
 				err = s.encodeValues(e, f)
 			}
-		} else if f.DataType.IsRefType() {
+		} else if helpers.IsRefType(f.DataType) {
 			item := e.Entities[f.Offset]
 			if item != nil {
 				err = s.encodeRef(item, pd, f)
@@ -53,7 +55,7 @@ func (s *Encoder) encodeValue(value uint64, f *MessageFieldDef) (err error) {
 func (s *Encoder) encodeValues(e *Entity, f *MessageFieldDef) (err error) {
 	data := e.Entities[f.Offset]
 	if data != nil {
-		n := len(data.Data) / f.DataType.GetSizeInBytes()
+		n := len(data.Data) / helpers.GetSizeInBytes(f.DataType)
 		for i := 0; i < n && err == nil; i++ {
 			var value Primitive
 			if value, err = f.GetValueAt(e, i); err == nil {

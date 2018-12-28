@@ -10,6 +10,8 @@ import (
 	"strconv"
 
 	. "github.com/umk/go-dymessage"
+	"github.com/umk/go-dymessage/internal/helpers"
+	. "github.com/umk/go-dymessage/internal/impl"
 )
 
 func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
@@ -45,7 +47,7 @@ func (s *Encoder) setJsonFields(
 		count++
 		if value != nil {
 			var err error
-			if f.DataType.IsRefType() {
+			if helpers.IsRefType(f.DataType) {
 				err = s.decodeJsonRef(e, pd, f, value)
 			} else {
 				err = s.decodeJsonValue(e, f, value)

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	. "github.com/umk/go-dymessage"
+	. "github.com/umk/go-dymessage/internal/impl"
 )
 
 type (
@@ -22,7 +22,7 @@ type (
 	}
 )
 
-func (rb *TestBuilder) CreateTestProto(key interface{}, namespace, name string) *MessageDefBuilder {
+func (rb *TestBuilder) CreateTestMessage(key interface{}, namespace, name string) *MessageDefBuilder {
 	return rb.AddMessageDef(key).
 		WithNamespace(namespace).
 		WithName(name).
@@ -51,7 +51,7 @@ func (rb *TestBuilder) CreateTestProto(key interface{}, namespace, name string) 
 func ArrangeEncodeDecode() (*MessageDef, *Entity) {
 	rb := TestBuilder{NewRegistryBuilder()}
 
-	def := rb.CreateTestProto("message", "koala.goshawk", "Message").
+	def := rb.CreateTestMessage("message", "koala.goshawk", "Message").
 		WithField("RegEntity", 10, rb.GetEntityType("message")).
 		WithArrayField("ArrEntity", 20, rb.GetEntityType("message")).
 		Build()

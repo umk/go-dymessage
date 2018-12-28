@@ -1,4 +1,4 @@
-package dymessage
+package impl
 
 // Depending on the context, the entity represents either a regular entity with
 // its own primitive and reference values, or the collection of either primitive

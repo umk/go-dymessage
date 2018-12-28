@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/umk/go-testutil"
 
-	. "github.com/umk/go-dymessage"
+	. "github.com/umk/go-dymessage/internal/impl"
 	. "github.com/umk/go-dymessage/internal/testing"
 )
 
@@ -25,14 +25,14 @@ func TestExport(t *testing.T) {
 	rb := TestBuilder{
 		RegistryBuilder: NewRegistryBuilder(),
 	}
-	rb.CreateTestProto("Cicada", "marten.colobus", "Cicada").
+	rb.CreateTestMessage("Cicada", "marten.colobus", "Cicada").
 		WithField("RegEntity", 100, rb.GetEntityType("Hoopoe")).
 		WithArrayField("ArrEntity", 101, rb.GetEntityType("Meerkat")).
 		Build()
-	rb.CreateTestProto("Hoopoe", "marten.colobus", "Hoopoe").
+	rb.CreateTestMessage("Hoopoe", "marten.colobus", "Hoopoe").
 		WithField("RegEntity", 100, rb.GetEntityType("Cicada")).
 		Build()
-	rb.CreateTestProto("Meerkat", "marten.heron", "Meerkat").
+	rb.CreateTestMessage("Meerkat", "marten.heron", "Meerkat").
 		Build()
 
 	reg, loc := rb.Build(), &testLocator{}

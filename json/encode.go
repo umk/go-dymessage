@@ -6,6 +6,8 @@ import (
 	"fmt"
 
 	. "github.com/umk/go-dymessage"
+	"github.com/umk/go-dymessage/internal/helpers"
+	. "github.com/umk/go-dymessage/internal/impl"
 )
 
 func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
@@ -22,13 +24,13 @@ func (s *Encoder) getJsonFields(e *Entity, pd *MessageDef) fields {
 	for _, f := range pd.Fields {
 		if f.Repeated {
 			var values []interface{}
-			if f.DataType.IsRefType() {
+			if helpers.IsRefType(f.DataType) {
 				values = s.encodeJsonRefs(e, pd, f)
 			} else {
 				values = s.encodeJsonValues(e, f)
 			}
 			fields[f.Name] = values
-		} else if f.DataType.IsRefType() {
+		} else if helpers.IsRefType(f.DataType) {
 			item := e.Entities[f.Offset]
 			if item != nil {
 				fields[f.Name] = s.encodeJsonRef(item, pd, f)
@@ -71,7 +73,7 @@ func (s *Encoder) encodeJsonValues(
 	e *Entity, f *MessageFieldDef) (result []interface{}) {
 	data := e.Entities[f.Offset]
 	if data != nil {
-		n := len(data.Data) / f.DataType.GetSizeInBytes()
+		n := len(data.Data) / helpers.GetSizeInBytes(f.DataType)
 		for i := 0; i < n; i++ {
 			value, _ := f.GetValueAt(e, i)
 			result = append(result, s.encodeJsonValue(value, f))
