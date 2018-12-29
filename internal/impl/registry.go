@@ -1,5 +1,7 @@
 package impl
 
+import . "github.com/umk/go-dymessage/types"
+
 type (
 	// Represents a collection of message definitions. The messages
 	// defined in the registry may refer only these messages, which are
@@ -40,7 +42,4 @@ type (
 		// array of entities.
 		Offset int
 	}
-
-	// The message field data type.
-	DataType uint32
 )

@@ -1,19 +1,30 @@
-package helpers
+package types
 
-import (
-	. "github.com/umk/go-dymessage"
-	"github.com/umk/go-dymessage/internal/impl"
+// The data type of a dynamic message field.
+type DataType uint32
+
+const (
+	DtInt32 DataType = iota + 1
+	DtInt64
+	DtUint32
+	DtUint64
+	DtFloat32
+	DtFloat64
+	DtBool
+	DtString
+	DtBytes
+	DtEntity DataType = 1 << 31
 )
 
 const (
-	TypeSize8  = 1
-	TypeSize32 = 4
-	TypeSize64 = 8
+	TypeWidth8  = 1
+	TypeWidth32 = 4
+	TypeWidth64 = 8
 )
 
 // IsRefType gets a value indicating whether the type represents a reference
 // type rather than a primitive type.
-func IsRefType(dt impl.DataType) bool {
+func (dt DataType) IsRefType() bool {
 	switch dt {
 	case DtInt32, DtInt64, DtUint32, DtUint64, DtFloat32, DtFloat64, DtBool:
 		return false
@@ -27,19 +38,19 @@ func IsRefType(dt impl.DataType) bool {
 	}
 }
 
-// GetSizeInBytes returns the value indicating how many bytes of memory does
+// GetWidthInBytes returns the value indicating how many bytes of memory does
 // the type require. This method is only valid for primitive types.
-func GetSizeInBytes(dt impl.DataType) int {
-	if IsRefType(dt) {
+func (dt DataType) GetWidthInBytes() int {
+	if dt.IsRefType() {
 		panic("operation is valid only for primitive types")
 	}
 	switch dt {
 	case DtInt32, DtUint32, DtFloat32:
-		return TypeSize32
+		return TypeWidth32
 	case DtInt64, DtUint64, DtFloat64:
-		return TypeSize64
+		return TypeWidth64
 	case DtBool:
-		return TypeSize8
+		return TypeWidth8
 	default:
 		panic(dt)
 	}

@@ -23,20 +23,19 @@ type (
 )
 
 // -----------------------------------------------------------------------------
-// Data types
+// Type defaults
 
-const (
-	DtInt32 impl.DataType = iota + 1
-	DtInt64
-	DtUint32
-	DtUint64
-	DtFloat32
-	DtFloat64
-	DtBool
-	DtString
-	DtBytes
-	DtEntity impl.DataType = 1 << 31
-)
+// GetDefaultPrimitive gets a default primitive value, which will evaluate to
+// zero for all numeric types or false for boolean.
+func GetDefaultPrimitive() Primitive { return Primitive(0) }
+
+// GetDefaultReference gets a default reference value, which doesn't contain any
+// data and will evaluate to nil for the reference native types or an empty
+// string for string type.
+func GetDefaultReference() Reference { return Reference{Entity: nil} }
+
+// GetDefaultEntity gets a default entity value, which corresponds to nil.
+func GetDefaultEntity() Entity { return Entity{Entity: nil} }
 
 // -----------------------------------------------------------------------------
 // Primitive value conversions
@@ -87,20 +86,17 @@ func FromBytes(value []byte, clone bool) Reference {
 	return Reference{&impl.Entity{Data: data}}
 }
 
-func (r *Reference) ToEntity() *Entity {
-	if r == nil {
-		return nil
-	}
-	return &Entity{r.Entity}
+func (r Reference) ToEntity() Entity {
+	return Entity{r.Entity}
 }
 
-func (r *Reference) ToString() string {
+func (r Reference) ToString() string {
 	return string(r.ToBytes())
 }
 
-func (r *Reference) ToBytes() []byte {
-	if r == nil {
+func (r Reference) ToBytes() []byte {
+	if r.Entity == nil {
 		return nil
 	}
-	return r.Data
+	return r.Entity.Data
 }
