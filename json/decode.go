@@ -2,16 +2,15 @@ package json
 
 import (
 	"bytes"
-	"encoding/base64"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"reflect"
 	"strconv"
 
+	"encoding/base64"
+	"encoding/json"
+
 	. "github.com/umk/go-dymessage"
-	"github.com/umk/go-dymessage/internal/helpers"
-	. "github.com/umk/go-dymessage/internal/impl"
 )
 
 func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
@@ -32,8 +31,7 @@ func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) error {
 	return nil
 }
 
-func (s *Encoder) setJsonFields(
-	e *Entity, pd *MessageDef, data fields) error {
+func (s *Encoder) setJsonFields(e *Entity, pd *MessageDef, data fields) error {
 	count := 0
 	for _, f := range pd.Fields {
 		value, ok := data[f.Name]
@@ -47,7 +45,7 @@ func (s *Encoder) setJsonFields(
 		count++
 		if value != nil {
 			var err error
-			if helpers.IsRefType(f.DataType) {
+			if f.DataType.IsRefType() {
 				err = s.decodeJsonRef(e, pd, f, value)
 			} else {
 				err = s.decodeJsonValue(e, f, value)
@@ -63,14 +61,13 @@ func (s *Encoder) setJsonFields(
 	return nil
 }
 
-func (s *Encoder) decodeJsonValue(
-	e *Entity, f *MessageFieldDef, value interface{}) error {
+func (s *Encoder) decodeJsonValue(e *Entity, f *MessageFieldDef, value interface{}) error {
 	if f.Repeated {
 		if items, ok := value.([]interface{}); ok {
 			f.Reserve(e, len(items))
 			for i, item := range items {
 				if value, err := s.decodePrimitive(item, f); err == nil {
-					f.SetValueAt(e, i, value)
+					_ = f.SetValueAt(e, i, value)
 				} else {
 					return err
 				}
@@ -95,7 +92,7 @@ func (s *Encoder) decodeJsonRef(
 			f.Reserve(e, len(items))
 			for i, item := range items {
 				if value, err := s.decodeEntity(item, pd, f); err == nil {
-					f.SetEntityAt(e, i, value)
+					_ = f.SetEntityAt(e, i, value)
 				} else {
 					return err
 				}
@@ -114,7 +111,7 @@ func (s *Encoder) decodeJsonRef(
 }
 
 func (s *Encoder) decodeEntity(
-	value interface{}, pd *MessageDef, f *MessageFieldDef) (*Reference, error) {
+	value interface{}, pd *MessageDef, f *MessageFieldDef) (Reference, error) {
 	switch value := value.(type) {
 	case string:
 		switch f.DataType {
@@ -122,7 +119,7 @@ func (s *Encoder) decodeEntity(
 			if b, err := base64.StdEncoding.DecodeString(value); err == nil {
 				return FromBytes(b, false), nil
 			} else {
-				return nil, err
+				return GetDefaultReference(), err
 			}
 		case DtString:
 			return FromString(value), nil
@@ -131,16 +128,15 @@ func (s *Encoder) decodeEntity(
 		def := pd.Registry.Defs[f.DataType&^DtEntity]
 		e := def.NewEntity()
 		if err := s.setJsonFields(e, pd, value); err != nil {
-			return nil, err
+			return GetDefaultReference(), err
 		}
 		return FromEntity(e), nil
 	}
 	err := fmt.Errorf("unexpected value %q of %v", value, reflect.TypeOf(value))
-	return nil, err
+	return GetDefaultReference(), err
 }
 
-func (*Encoder) decodePrimitive(
-	value interface{}, f *MessageFieldDef) (Primitive, error) {
+func (*Encoder) decodePrimitive(value interface{}, f *MessageFieldDef) (Primitive, error) {
 	switch value := value.(type) {
 	case json.Number:
 		str := value.String()
@@ -170,5 +166,5 @@ func (*Encoder) decodePrimitive(
 		}
 	}
 	err := fmt.Errorf("unexpected value %q of %v", value, reflect.TypeOf(value))
-	return PrimitiveDefault, err
+	return GetDefaultPrimitive(), err
 }

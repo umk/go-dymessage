@@ -1,4 +1,4 @@
-package types
+package dymessage
 
 // The data type of a dynamic message field.
 type DataType uint32

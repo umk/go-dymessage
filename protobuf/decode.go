@@ -5,8 +5,6 @@ import (
 	"fmt"
 
 	. "github.com/umk/go-dymessage"
-	"github.com/umk/go-dymessage/internal/helpers"
-	. "github.com/umk/go-dymessage/internal/impl"
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
@@ -53,7 +51,7 @@ func (s *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error
 		// it doesn't matter, so returning without an error.
 		return nil
 	}
-	if !helpers.IsRefType(f.DataType) {
+	if !f.DataType.IsRefType() {
 		return decodePacked(e, f, value)
 	}
 	var entity *Entity
@@ -142,7 +140,7 @@ func decodePacked(e *Entity, f *MessageFieldDef, value []byte) error {
 			return err
 		}
 		n := f.Reserve(e, 1)
-		f.SetValueAt(e, n, Primitive(i))
+		_ = f.SetValueAt(e, n, Primitive(i))
 	}
 	return nil
 }

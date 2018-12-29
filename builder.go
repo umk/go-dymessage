@@ -2,24 +2,21 @@ package dymessage
 
 import (
 	"fmt"
-
-	"github.com/umk/go-dymessage/internal/impl"
-	. "github.com/umk/go-dymessage/types"
 )
 
 type (
 	RegistryBuilder struct {
 		defs     map[interface{}]*MessageDefBuilder
-		registry *impl.Registry
+		registry *Registry
 	}
 
 	MessageDefBuilder struct {
 		// Index of this message definition in the registry.
 		index    int
-		registry *impl.Registry
+		registry *Registry
 		// Dynamic message definition which is being built by this
 		// instance of builder.
-		def *impl.MessageDef
+		def *MessageDef
 	}
 )
 
@@ -29,7 +26,7 @@ type (
 func NewRegistryBuilder() *RegistryBuilder {
 	return &RegistryBuilder{
 		defs:     make(map[interface{}]*MessageDefBuilder),
-		registry: &impl.Registry{},
+		registry: &Registry{},
 	}
 }
 
@@ -38,9 +35,9 @@ func (rb *RegistryBuilder) AddMessageDef(key interface{}) *MessageDefBuilder {
 	if def.def != nil {
 		panic(fmt.Sprintf("entity %v has already been added at %v", key, def.index))
 	}
-	def.def = &impl.MessageDef{
+	def.def = &MessageDef{
 		Registry: rb.registry,
-		Fields:   make(map[uint64]*impl.MessageFieldDef),
+		Fields:   make(map[uint64]*MessageFieldDef),
 	}
 	return def
 }
@@ -54,13 +51,13 @@ func (rb *RegistryBuilder) GetEntityType(key interface{}) DataType {
 	return DtEntity | DataType(def.index)
 }
 
-func (rb *RegistryBuilder) Build() Registry {
+func (rb *RegistryBuilder) Build() *Registry {
 	for i, def := range rb.registry.Defs {
 		if def == nil {
 			panic(fmt.Sprintf("definition at %v is empty", i))
 		}
 	}
-	return Registry{rb.registry}
+	return rb.registry
 }
 
 func (rb *RegistryBuilder) ensureDef(key interface{}) *MessageDefBuilder {
@@ -92,7 +89,7 @@ func (mb *MessageDefBuilder) WithNamespace(name string) *MessageDefBuilder {
 
 func (mb *MessageDefBuilder) WithField(
 	name string, tag uint64, dataType DataType) *MessageDefBuilder {
-	mb.addField(tag, &impl.MessageFieldDef{
+	mb.addField(tag, &MessageFieldDef{
 		Name:     name,
 		DataType: dataType,
 		Tag:      tag,
@@ -103,7 +100,7 @@ func (mb *MessageDefBuilder) WithField(
 
 func (mb *MessageDefBuilder) WithArrayField(
 	name string, tag uint64, dataType DataType) *MessageDefBuilder {
-	mb.addField(tag, &impl.MessageFieldDef{
+	mb.addField(tag, &MessageFieldDef{
 		Name:     name,
 		DataType: dataType,
 		Tag:      tag,
@@ -112,15 +109,15 @@ func (mb *MessageDefBuilder) WithArrayField(
 	return mb
 }
 
-func (mb *MessageDefBuilder) Build() MessageDef {
+func (mb *MessageDefBuilder) Build() *MessageDef {
 	if mb.registry.Defs[mb.index] != nil {
 		panic(fmt.Sprintf("message definition at %v has already been built", mb.index))
 	}
 	mb.registry.Defs[mb.index] = mb.def
-	return MessageDef{mb.def}
+	return mb.def
 }
 
-func (mb *MessageDefBuilder) addField(tag uint64, f *impl.MessageFieldDef) {
+func (mb *MessageDefBuilder) addField(tag uint64, f *MessageFieldDef) {
 	// Getting an offset of the value either in the primitive values array
 	// or the references array.
 	if f.DataType.IsRefType() || f.Repeated {

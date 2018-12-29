@@ -2,12 +2,16 @@ package dymessage
 
 import (
 	"math"
-
-	"github.com/umk/go-dymessage/internal/impl"
 )
 
 type (
-	Entity struct{ *impl.Entity }
+	// Depending on the context, the entity represents either a regular
+	// entity with its own primitive and reference values, or the collection
+	// of either primitive or reference values, sharing the same type.
+	Entity struct {
+		Data     []byte    // Memory for storing the primitive values
+		Entities []*Entity // The entities referenced from the current one
+	}
 
 	// A generic representation of the primitive values that provides
 	// methods for converting the value to any native primitive type. The
@@ -19,7 +23,7 @@ type (
 	// methods for converting the value to any native reference type. The
 	// provided methods do not keep track of the correct usage, meaning that
 	// the user must correlate between the methods and the value types.
-	Reference struct{ *impl.Entity }
+	Reference struct{ *Entity }
 )
 
 // -----------------------------------------------------------------------------
@@ -32,10 +36,10 @@ func GetDefaultPrimitive() Primitive { return Primitive(0) }
 // GetDefaultReference gets a default reference value, which doesn't contain any
 // data and will evaluate to nil for the reference native types or an empty
 // string for string type.
-func GetDefaultReference() Reference { return Reference{Entity: nil} }
+func GetDefaultReference() Reference { return Reference{} }
 
 // GetDefaultEntity gets a default entity value, which corresponds to nil.
-func GetDefaultEntity() Entity { return Entity{Entity: nil} }
+func GetDefaultEntity() Entity { return Entity{} }
 
 // -----------------------------------------------------------------------------
 // Primitive value conversions
@@ -70,11 +74,11 @@ func (p Primitive) ToBool() bool { return p != 0 }
 // Reference value conversions
 
 func FromEntity(value *Entity) Reference {
-	return Reference{value.Entity}
+	return Reference{value}
 }
 
 func FromString(value string) Reference {
-	return Reference{&impl.Entity{Data: ([]byte)(value)}}
+	return Reference{&Entity{Data: ([]byte)(value)}}
 }
 
 func FromBytes(value []byte, clone bool) Reference {
@@ -83,16 +87,12 @@ func FromBytes(value []byte, clone bool) Reference {
 		data = make([]byte, len(value))
 		copy(data, value)
 	}
-	return Reference{&impl.Entity{Data: data}}
+	return Reference{&Entity{Data: data}}
 }
 
-func (r Reference) ToEntity() Entity {
-	return Entity{r.Entity}
-}
+func (r Reference) ToEntity() *Entity { return r.Entity }
 
-func (r Reference) ToString() string {
-	return string(r.ToBytes())
-}
+func (r Reference) ToString() string { return string(r.ToBytes()) }
 
 func (r Reference) ToBytes() []byte {
 	if r.Entity == nil {

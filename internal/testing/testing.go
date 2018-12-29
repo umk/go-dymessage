@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	. "github.com/umk/go-dymessage/internal/impl"
+	. "github.com/umk/go-dymessage"
 )
 
 type (
@@ -198,7 +198,7 @@ func (f *arrayReader) getValueAt(e *Entity, n int) Primitive {
 	return value
 }
 
-func (f *arrayReader) getEntityAt(e *Entity, n int) *Reference {
+func (f *arrayReader) getEntityAt(e *Entity, n int) Reference {
 	value, err := f.MessageFieldDef.GetEntityAt(e, n)
 	require.NoError(f.t, err)
 	return value

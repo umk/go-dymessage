@@ -8,7 +8,6 @@ import (
 	"text/template"
 
 	. "github.com/umk/go-dymessage"
-	. "github.com/umk/go-dymessage/internal/impl"
 	. "github.com/umk/go-fslayer"
 	"github.com/umk/go-stringutil"
 )
@@ -122,7 +121,7 @@ func export(r *Registry, namespace string, defs map[string]*MessageDef, loc Expo
 	}
 	defer func() {
 		if closer, ok := wr.(io.Closer); ok {
-			closer.Close()
+			_ = closer.Close()
 		}
 	}()
 	return createTemplate(r, namespace, loc).Execute(wr, struct {

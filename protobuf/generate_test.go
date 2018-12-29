@@ -9,10 +9,10 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	"github.com/umk/go-testutil"
 
-	. "github.com/umk/go-dymessage/internal/impl"
+	. "github.com/umk/go-dymessage"
 	. "github.com/umk/go-dymessage/internal/testing"
+	"github.com/umk/go-testutil"
 )
 
 type testLocator struct {
@@ -45,12 +45,12 @@ func TestExport(t *testing.T) {
 	root := filepath.Join(wd, "../internal/testdata")
 
 	if testutil.DoFix() {
-		os.MkdirAll(root, os.ModeDir|os.ModePerm)
+		_ = os.MkdirAll(root, os.ModeDir|os.ModePerm)
 		for ns, buf := range loc.bufs {
 			f, err := os.Create(filepath.Join(root, ns+".src"))
 			require.NoError(t, err)
-			f.WriteString(buf.String())
-			f.Close()
+			_, _ = f.WriteString(buf.String())
+			_ = f.Close()
 		}
 	}
 

@@ -6,8 +6,6 @@ import (
 	"fmt"
 
 	. "github.com/umk/go-dymessage"
-	"github.com/umk/go-dymessage/internal/helpers"
-	. "github.com/umk/go-dymessage/internal/impl"
 )
 
 func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
@@ -24,13 +22,13 @@ func (s *Encoder) getJsonFields(e *Entity, pd *MessageDef) fields {
 	for _, f := range pd.Fields {
 		if f.Repeated {
 			var values []interface{}
-			if helpers.IsRefType(f.DataType) {
+			if f.DataType.IsRefType() {
 				values = s.encodeJsonRefs(e, pd, f)
 			} else {
 				values = s.encodeJsonValues(e, f)
 			}
 			fields[f.Name] = values
-		} else if helpers.IsRefType(f.DataType) {
+		} else if f.DataType.IsRefType() {
 			item := e.Entities[f.Offset]
 			if item != nil {
 				fields[f.Name] = s.encodeJsonRef(item, pd, f)
@@ -45,8 +43,7 @@ func (s *Encoder) getJsonFields(e *Entity, pd *MessageDef) fields {
 	return fields
 }
 
-func (*Encoder) encodeJsonValue(
-	value Primitive, f *MessageFieldDef) interface{} {
+func (*Encoder) encodeJsonValue(value Primitive, f *MessageFieldDef) interface{} {
 	var number interface{}
 	switch f.DataType {
 	case DtInt32:
@@ -69,11 +66,10 @@ func (*Encoder) encodeJsonValue(
 	return json.Number(fmt.Sprint(number))
 }
 
-func (s *Encoder) encodeJsonValues(
-	e *Entity, f *MessageFieldDef) (result []interface{}) {
+func (s *Encoder) encodeJsonValues(e *Entity, f *MessageFieldDef) (result []interface{}) {
 	data := e.Entities[f.Offset]
 	if data != nil {
-		n := len(data.Data) / helpers.GetSizeInBytes(f.DataType)
+		n := len(data.Data) / f.DataType.GetWidthInBytes()
 		for i := 0; i < n; i++ {
 			value, _ := f.GetValueAt(e, i)
 			result = append(result, s.encodeJsonValue(value, f))
@@ -82,8 +78,7 @@ func (s *Encoder) encodeJsonValues(
 	return
 }
 
-func (s *Encoder) encodeJsonRef(
-	e *Entity, pd *MessageDef, f *MessageFieldDef) interface{} {
+func (s *Encoder) encodeJsonRef(e *Entity, pd *MessageDef, f *MessageFieldDef) interface{} {
 	switch f.DataType {
 	case DtBytes:
 		return base64.StdEncoding.EncodeToString(e.Data)
