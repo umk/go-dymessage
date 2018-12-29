@@ -55,10 +55,8 @@ func (s *Encoder) encodeValues(e *Entity, f *MessageFieldDef) (err error) {
 	if data != nil {
 		n := len(data.Data) / f.DataType.GetWidthInBytes()
 		for i := 0; i < n && err == nil; i++ {
-			var value Primitive
-			if value, err = f.GetPrimitiveAt(e, i); err == nil {
-				err = s.encodeValue(uint64(value), f)
-			}
+			value := f.GetPrimitiveAt(e, i)
+			err = s.encodeValue(uint64(value), f)
 		}
 	}
 	return

@@ -193,13 +193,9 @@ func readArr(t *testing.T, f *MessageFieldDef) *arrayReader {
 }
 
 func (f *arrayReader) getValueAt(e *Entity, n int) Primitive {
-	value, err := f.MessageFieldDef.GetPrimitiveAt(e, n)
-	require.NoError(f.t, err)
-	return value
+	return f.MessageFieldDef.GetPrimitiveAt(e, n)
 }
 
 func (f *arrayReader) getEntityAt(e *Entity, n int) Reference {
-	value, err := f.MessageFieldDef.GetReferenceAt(e, n)
-	require.NoError(f.t, err)
-	return value
+	return f.MessageFieldDef.GetReferenceAt(e, n)
 }

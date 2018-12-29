@@ -109,7 +109,7 @@ func (s *Encoder) decodeValue(e *Entity, wire uint64, f *MessageFieldDef) error 
 				e.Entities[f.Offset] = entity
 			}
 			n := f.Reserve(entity, 1)
-			err = f.SetPrimitiveAt(entity, n, Primitive(value))
+			f.SetPrimitiveAt(entity, n, Primitive(value))
 			if err != nil {
 				panic(err)
 			}
@@ -139,7 +139,7 @@ func decodePacked(e *Entity, f *MessageFieldDef, value []byte) error {
 			return err
 		}
 		n := f.Reserve(e, 1)
-		_ = f.SetPrimitiveAt(e, n, Primitive(i))
+		f.SetPrimitiveAt(e, n, Primitive(i))
 	}
 	return nil
 }

@@ -71,7 +71,7 @@ func (s *Encoder) encodeJsonValues(e *Entity, f *MessageFieldDef) (result []inte
 	if data != nil {
 		n := len(data.Data) / f.DataType.GetWidthInBytes()
 		for i := 0; i < n; i++ {
-			value, _ := f.GetPrimitiveAt(e, i)
+			value := f.GetPrimitiveAt(e, i)
 			result = append(result, s.encodeJsonValue(value, f))
 		}
 	}
