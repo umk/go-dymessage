@@ -70,7 +70,7 @@ func (s *Encoder) encodeRef(
 	if f.DataType == DtBytes || f.DataType == DtString {
 		bytes = e.Data
 	} else {
-		def := pd.Registry.Defs[f.DataType&^DtEntity]
+		def := pd.Registry.GetMessageDef(f.DataType)
 		enc := Encoder{}
 		if bytes, err = enc.Encode(e, def); err != nil {
 			return

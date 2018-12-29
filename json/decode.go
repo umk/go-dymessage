@@ -14,30 +14,30 @@ import (
 )
 
 func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
-	e := pd.NewEntity()
-	return e, s.DecodeInto(b, pd, e)
+	return s.DecodeInto(b, pd, pd.NewEntity())
 }
 
-func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) error {
-	var data fields
+func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
+	var data map[string]interface{}
 	decoder := json.NewDecoder(bytes.NewReader(b))
 	decoder.UseNumber()
 	if err := decoder.Decode(&data); err != nil {
-		return err
+		return nil, err
 	}
 	if err := s.setJsonFields(e, pd, data); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return e, nil
 }
 
-func (s *Encoder) setJsonFields(e *Entity, pd *MessageDef, data fields) error {
+func (s *Encoder) setJsonFields(
+	e *Entity, pd *MessageDef, data map[string]interface{}) error {
 	count := 0
 	for _, f := range pd.Fields {
 		value, ok := data[f.Name]
 		if !ok {
 			if !s.IgnoreUnknown {
-				message := fmt.Sprintf("Unknown field name %s in the message", f.Name)
+				message := fmt.Sprintf("unknown field name %q in the message", f.Name)
 				return errors.New(message)
 			}
 			continue
@@ -125,7 +125,7 @@ func (s *Encoder) decodeEntity(
 			return FromString(value), nil
 		}
 	case map[string]interface{}:
-		def := pd.Registry.Defs[f.DataType&^DtEntity]
+		def := pd.Registry.GetMessageDef(f.DataType)
 		e := def.NewEntity()
 		if err := s.setJsonFields(e, pd, value); err != nil {
 			return GetDefaultReference(), err
@@ -139,7 +139,7 @@ func (s *Encoder) decodeEntity(
 func (*Encoder) decodePrimitive(value interface{}, f *MessageFieldDef) (Primitive, error) {
 	switch value := value.(type) {
 	case json.Number:
-		str := value.String()
+		str := string(value)
 		switch f.DataType {
 		case DtInt32:
 			value, err := strconv.ParseInt(str, 10, 32)

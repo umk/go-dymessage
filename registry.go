@@ -1,5 +1,7 @@
 package dymessage
 
+import "fmt"
+
 type (
 	// Represents a collection of message definitions. The messages
 	// defined in the registry may refer only these messages, which are
@@ -42,7 +44,25 @@ type (
 	}
 )
 
-func (md MessageDef) NewEntity() *Entity {
+// -----------------------------------------------------------------------------
+// Implementation
+
+// GetMessageDef gets the message definition by its data type. The message
+// definition can be obtained during the construction of the registry by calling
+// the GetEntityType method of RegistryBuilder.
+func (r *Registry) GetMessageDef(dt DataType) *MessageDef {
+	id, n := int(dt &^ DtEntity), len(r.Defs)
+	if id >= n {
+		message := fmt.Sprintf(
+			"expected message definition at %d, but got only %d definitions", id, n)
+		panic(message)
+	}
+	return r.Defs[id]
+}
+
+// NewEntity creates a new entity with all of the buffers reserved to store the
+// primitive and reference fields of the entity.
+func (md *MessageDef) NewEntity() *Entity {
 	return &Entity{
 		Data:     make([]byte, md.DataBufLength),
 		Entities: make([]*Entity, md.EntityBufLength),

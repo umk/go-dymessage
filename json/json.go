@@ -10,7 +10,4 @@ type (
 		// in the message definition.
 		RequireAll bool
 	}
-
-	// A mapping between the names of JSON fields and its values.
-	fields map[string]interface{}
 )

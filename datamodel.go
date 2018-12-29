@@ -38,9 +38,6 @@ func GetDefaultPrimitive() Primitive { return Primitive(0) }
 // string for string type.
 func GetDefaultReference() Reference { return Reference{} }
 
-// GetDefaultEntity gets a default entity value, which corresponds to nil.
-func GetDefaultEntity() Entity { return Entity{} }
-
 // -----------------------------------------------------------------------------
 // Primitive value conversions
 

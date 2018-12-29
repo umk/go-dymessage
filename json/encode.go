@@ -17,8 +17,8 @@ func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
 	}
 }
 
-func (s *Encoder) getJsonFields(e *Entity, pd *MessageDef) fields {
-	fields := make(fields)
+func (s *Encoder) getJsonFields(e *Entity, pd *MessageDef) map[string]interface{} {
+	fields := make(map[string]interface{})
 	for _, f := range pd.Fields {
 		if f.Repeated {
 			var values []interface{}
@@ -85,7 +85,7 @@ func (s *Encoder) encodeJsonRef(e *Entity, pd *MessageDef, f *MessageFieldDef) i
 	case DtString:
 		return string(e.Data)
 	default:
-		def := pd.Registry.Defs[f.DataType&^DtEntity]
+		def := pd.Registry.GetMessageDef(f.DataType)
 		return s.getJsonFields(e, def)
 	}
 }

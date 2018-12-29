@@ -9,12 +9,12 @@ import (
 
 var ErrIndexOutOfRange = errors.New("index is out of range")
 
-func (f MessageFieldDef) GetValue(e *Entity) Primitive {
+func (f *MessageFieldDef) GetValue(e *Entity) Primitive {
 	data, _ := f.getData(e, f.Offset)
 	return Primitive(data)
 }
 
-func (f MessageFieldDef) GetValueAt(e *Entity, n int) (Primitive, error) {
+func (f *MessageFieldDef) GetValueAt(e *Entity, n int) (Primitive, error) {
 	data := e.Entities[f.Offset]
 	if data == nil {
 		return GetDefaultPrimitive(), ErrIndexOutOfRange
@@ -23,13 +23,13 @@ func (f MessageFieldDef) GetValueAt(e *Entity, n int) (Primitive, error) {
 	}
 }
 
-func (f MessageFieldDef) SetValue(e *Entity, value Primitive) {
+func (f *MessageFieldDef) SetValue(e *Entity, value Primitive) {
 	if err := f.setData(e, f.Offset, value); err != nil {
 		panic(err)
 	}
 }
 
-func (f MessageFieldDef) SetValueAt(e *Entity, n int, value Primitive) error {
+func (f *MessageFieldDef) SetValueAt(e *Entity, n int, value Primitive) error {
 	data := e.Entities[f.Offset]
 	if data == nil {
 		return ErrIndexOutOfRange
@@ -38,11 +38,11 @@ func (f MessageFieldDef) SetValueAt(e *Entity, n int, value Primitive) error {
 	}
 }
 
-func (f MessageFieldDef) GetEntity(e *Entity) Reference {
+func (f *MessageFieldDef) GetEntity(e *Entity) Reference {
 	return Reference{e.Entities[f.Offset]}
 }
 
-func (f MessageFieldDef) GetEntityAt(e *Entity, n int) (Reference, error) {
+func (f *MessageFieldDef) GetEntityAt(e *Entity, n int) (Reference, error) {
 	data := e.Entities[f.Offset]
 	if data == nil || len(data.Entities) <= n {
 		return GetDefaultReference(), ErrIndexOutOfRange
@@ -51,11 +51,11 @@ func (f MessageFieldDef) GetEntityAt(e *Entity, n int) (Reference, error) {
 	}
 }
 
-func (f MessageFieldDef) SetEntity(e *Entity, value Reference) {
+func (f *MessageFieldDef) SetEntity(e *Entity, value Reference) {
 	e.Entities[f.Offset] = value.Entity
 }
 
-func (f MessageFieldDef) SetEntityAt(e *Entity, n int, value Reference) error {
+func (f *MessageFieldDef) SetEntityAt(e *Entity, n int, value Reference) error {
 	data := e.Entities[f.Offset]
 	if data == nil || len(data.Entities) <= n {
 		return ErrIndexOutOfRange
@@ -65,7 +65,10 @@ func (f MessageFieldDef) SetEntityAt(e *Entity, n int, value Reference) error {
 	}
 }
 
-func (f MessageFieldDef) Reserve(e *Entity, count int) int {
+// Reserve reserves a room for specified number of items for the repeated
+// message field and returns the number of items that have been allocated in the
+// collection before a place for the new ones has been reserved.
+func (f *MessageFieldDef) Reserve(e *Entity, count int) int {
 	data := e.Entities[f.Offset]
 	if data == nil {
 		data = new(Entity)
@@ -83,7 +86,7 @@ func (f MessageFieldDef) Reserve(e *Entity, count int) int {
 	}
 }
 
-func (f MessageFieldDef) Len(e *Entity) int {
+func (f *MessageFieldDef) Len(e *Entity) int {
 	data := e.Entities[f.Offset]
 	if data == nil {
 		return 0
@@ -95,7 +98,7 @@ func (f MessageFieldDef) Len(e *Entity) int {
 	}
 }
 
-func (f MessageFieldDef) getData(e *Entity, off int) (Primitive, error) {
+func (f *MessageFieldDef) getData(e *Entity, off int) (Primitive, error) {
 	sz := f.DataType.GetWidthInBytes()
 	if off+sz > len(e.Data) {
 		return 0, ErrIndexOutOfRange
@@ -115,7 +118,7 @@ func (f MessageFieldDef) getData(e *Entity, off int) (Primitive, error) {
 	return Primitive(value), nil
 }
 
-func (f MessageFieldDef) setData(e *Entity, off int, value Primitive) error {
+func (f *MessageFieldDef) setData(e *Entity, off int, value Primitive) error {
 	sz := f.DataType.GetWidthInBytes()
 	if off+sz > len(e.Data) {
 		return ErrIndexOutOfRange

@@ -9,23 +9,22 @@ import (
 )
 
 func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
-	e := pd.NewEntity()
-	return e, s.DecodeInto(b, pd, e)
+	return s.DecodeInto(b, pd, pd.NewEntity())
 }
 
-func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) error {
+func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
 	s.buf.SetBuf(b)
 	for !s.buf.Eob() {
 		t, err := s.buf.DecodeVarint()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		wire, tag := t&7, t>>3
 		f, ok := pd.Fields[tag]
 		if !ok {
 			if !s.IgnoreUnknown {
 				message := fmt.Sprintf("Unexpected tag %d in the message", tag)
-				return errors.New(message)
+				return nil, errors.New(message)
 			}
 			continue
 		}
@@ -35,10 +34,10 @@ func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) error {
 			err = s.decodeValue(e, wire, f)
 		}
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return e, nil
 }
 
 func (s *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error {
@@ -56,7 +55,7 @@ func (s *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error
 	}
 	var entity *Entity
 	if (f.DataType & DtEntity) != 0 {
-		def := pd.Registry.Defs[f.DataType&^DtEntity]
+		def := pd.Registry.GetMessageDef(f.DataType)
 		enc := Encoder{
 			IgnoreUnknown: s.IgnoreUnknown,
 		}
@@ -98,8 +97,8 @@ func (s *Encoder) decodeValue(e *Entity, wire uint64, f *MessageFieldDef) error 
 		return errors.New(message)
 	}
 	if f == nil {
-		// The field has not been found, but if we've managed to reach this point,
-		// it doesn't matter, so returning without an error.
+		// The field has not been found, but if we've managed to reach
+		// this point, it doesn't matter, so returning without an error.
 		return nil
 	}
 	if err == nil {

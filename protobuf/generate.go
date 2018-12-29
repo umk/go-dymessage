@@ -108,7 +108,7 @@ func export(r *Registry, namespace string, defs map[string]*MessageDef, loc Expo
 				return fmt.Errorf("tag %v is out of range", f.Tag)
 			}
 			if (f.DataType & DtEntity) != 0 {
-				dt := r.Defs[f.DataType&^DtEntity]
+				dt := r.GetMessageDef(f.DataType)
 				if dt.Namespace != namespace {
 					imports[dt.Namespace] = nil
 				}
@@ -143,7 +143,7 @@ func createTemplate(reg *Registry, ns string, loc ExportLocator) *template.Templ
 					return name
 				}
 				if (f.DataType & DtEntity) != 0 {
-					t := reg.Defs[f.DataType&^DtEntity]
+					t := reg.GetMessageDef(f.DataType)
 					if ns == t.Namespace {
 						return t.Name
 					} else {
