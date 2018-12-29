@@ -14,6 +14,7 @@ func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
 
 func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
 	s.buf.SetBuf(b)
+	defer s.buf.Reset()
 	for !s.buf.Eob() {
 		t, err := s.buf.DecodeVarint()
 		if err != nil {

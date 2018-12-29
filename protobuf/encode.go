@@ -6,7 +6,7 @@ import (
 )
 
 func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
-	s.buf.Reset()
+	defer s.buf.Reset()
 	for _, f := range pd.Fields {
 		var err error
 		if f.Repeated {
@@ -25,7 +25,6 @@ func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
 			err = s.encodeValue(uint64(value), f)
 		}
 		if err != nil {
-			s.buf.Reset()
 			return nil, err
 		}
 	}
