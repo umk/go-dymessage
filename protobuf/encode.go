@@ -21,7 +21,7 @@ func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
 				err = s.encodeRef(item, pd, f)
 			}
 		} else {
-			value := f.GetValue(e)
+			value := f.GetPrimitive(e)
 			err = s.encodeValue(uint64(value), f)
 		}
 		if err != nil {
@@ -56,7 +56,7 @@ func (s *Encoder) encodeValues(e *Entity, f *MessageFieldDef) (err error) {
 		n := len(data.Data) / f.DataType.GetWidthInBytes()
 		for i := 0; i < n && err == nil; i++ {
 			var value Primitive
-			if value, err = f.GetValueAt(e, i); err == nil {
+			if value, err = f.GetPrimitiveAt(e, i); err == nil {
 				err = s.encodeValue(uint64(value), f)
 			}
 		}

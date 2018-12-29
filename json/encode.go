@@ -36,7 +36,7 @@ func (s *Encoder) getJsonFields(e *Entity, pd *MessageDef) map[string]interface{
 				fields[f.Name] = nil
 			}
 		} else {
-			value := f.GetValue(e)
+			value := f.GetPrimitive(e)
 			fields[f.Name] = s.encodeJsonValue(value, f)
 		}
 	}
@@ -71,7 +71,7 @@ func (s *Encoder) encodeJsonValues(e *Entity, f *MessageFieldDef) (result []inte
 	if data != nil {
 		n := len(data.Data) / f.DataType.GetWidthInBytes()
 		for i := 0; i < n; i++ {
-			value, _ := f.GetValueAt(e, i)
+			value, _ := f.GetPrimitiveAt(e, i)
 			result = append(result, s.encodeJsonValue(value, f))
 		}
 	}

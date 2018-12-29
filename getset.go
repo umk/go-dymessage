@@ -9,40 +9,40 @@ import (
 
 var ErrIndexOutOfRange = errors.New("index is out of range")
 
-func (f *MessageFieldDef) GetValue(e *Entity) Primitive {
-	data, _ := f.getData(e, f.Offset)
+func (f *MessageFieldDef) GetPrimitive(e *Entity) Primitive {
+	data, _ := f.getPrimitive(e, f.Offset)
 	return Primitive(data)
 }
 
-func (f *MessageFieldDef) GetValueAt(e *Entity, n int) (Primitive, error) {
+func (f *MessageFieldDef) GetPrimitiveAt(e *Entity, n int) (Primitive, error) {
 	data := e.Entities[f.Offset]
 	if data == nil {
 		return GetDefaultPrimitive(), ErrIndexOutOfRange
 	} else {
-		return f.getData(data, f.DataType.GetWidthInBytes()*n)
+		return f.getPrimitive(data, f.DataType.GetWidthInBytes()*n)
 	}
 }
 
-func (f *MessageFieldDef) SetValue(e *Entity, value Primitive) {
-	if err := f.setData(e, f.Offset, value); err != nil {
+func (f *MessageFieldDef) SetPrimitive(e *Entity, value Primitive) {
+	if err := f.setPrimitive(e, f.Offset, value); err != nil {
 		panic(err)
 	}
 }
 
-func (f *MessageFieldDef) SetValueAt(e *Entity, n int, value Primitive) error {
+func (f *MessageFieldDef) SetPrimitiveAt(e *Entity, n int, value Primitive) error {
 	data := e.Entities[f.Offset]
 	if data == nil {
 		return ErrIndexOutOfRange
 	} else {
-		return f.setData(data, f.DataType.GetWidthInBytes()*n, value)
+		return f.setPrimitive(data, f.DataType.GetWidthInBytes()*n, value)
 	}
 }
 
-func (f *MessageFieldDef) GetEntity(e *Entity) Reference {
+func (f *MessageFieldDef) GetReference(e *Entity) Reference {
 	return Reference{e.Entities[f.Offset]}
 }
 
-func (f *MessageFieldDef) GetEntityAt(e *Entity, n int) (Reference, error) {
+func (f *MessageFieldDef) GetReferenceAt(e *Entity, n int) (Reference, error) {
 	data := e.Entities[f.Offset]
 	if data == nil || len(data.Entities) <= n {
 		return GetDefaultReference(), ErrIndexOutOfRange
@@ -51,11 +51,11 @@ func (f *MessageFieldDef) GetEntityAt(e *Entity, n int) (Reference, error) {
 	}
 }
 
-func (f *MessageFieldDef) SetEntity(e *Entity, value Reference) {
+func (f *MessageFieldDef) SetReference(e *Entity, value Reference) {
 	e.Entities[f.Offset] = value.Entity
 }
 
-func (f *MessageFieldDef) SetEntityAt(e *Entity, n int, value Reference) error {
+func (f *MessageFieldDef) SetReferenceAt(e *Entity, n int, value Reference) error {
 	data := e.Entities[f.Offset]
 	if data == nil || len(data.Entities) <= n {
 		return ErrIndexOutOfRange
@@ -98,7 +98,7 @@ func (f *MessageFieldDef) Len(e *Entity) int {
 	}
 }
 
-func (f *MessageFieldDef) getData(e *Entity, off int) (Primitive, error) {
+func (f *MessageFieldDef) getPrimitive(e *Entity, off int) (Primitive, error) {
 	sz := f.DataType.GetWidthInBytes()
 	if off+sz > len(e.Data) {
 		return 0, ErrIndexOutOfRange
@@ -118,7 +118,7 @@ func (f *MessageFieldDef) getData(e *Entity, off int) (Primitive, error) {
 	return Primitive(value), nil
 }
 
-func (f *MessageFieldDef) setData(e *Entity, off int, value Primitive) error {
+func (f *MessageFieldDef) setPrimitive(e *Entity, off int, value Primitive) error {
 	sz := f.DataType.GetWidthInBytes()
 	if off+sz > len(e.Data) {
 		return ErrIndexOutOfRange

@@ -67,7 +67,7 @@ func (s *Encoder) decodeJsonValue(e *Entity, f *MessageFieldDef, value interface
 			f.Reserve(e, len(items))
 			for i, item := range items {
 				if value, err := s.decodePrimitive(item, f); err == nil {
-					_ = f.SetValueAt(e, i, value)
+					_ = f.SetPrimitiveAt(e, i, value)
 				} else {
 					return err
 				}
@@ -77,7 +77,7 @@ func (s *Encoder) decodeJsonValue(e *Entity, f *MessageFieldDef, value interface
 		}
 	} else {
 		if value, err := s.decodePrimitive(value, f); err == nil {
-			f.SetValue(e, value)
+			f.SetPrimitive(e, value)
 		} else {
 			return err
 		}
@@ -92,7 +92,7 @@ func (s *Encoder) decodeJsonRef(
 			f.Reserve(e, len(items))
 			for i, item := range items {
 				if value, err := s.decodeEntity(item, pd, f); err == nil {
-					_ = f.SetEntityAt(e, i, value)
+					_ = f.SetReferenceAt(e, i, value)
 				} else {
 					return err
 				}
@@ -102,7 +102,7 @@ func (s *Encoder) decodeJsonRef(
 		}
 	} else {
 		if value, err := s.decodeEntity(value, pd, f); err == nil {
-			f.SetEntity(e, value)
+			f.SetReference(e, value)
 		} else {
 			return err
 		}
