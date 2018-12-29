@@ -12,4 +12,4 @@ type Encoder struct {
 	buf           Buffer
 }
 
-var RepeatedNullErr = errors.New("repeated field has null item")
+var ErrRepeatedNull = errors.New("repeated field has null item")

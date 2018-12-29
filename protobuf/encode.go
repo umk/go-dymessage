@@ -89,7 +89,7 @@ func (s *Encoder) encodeRefs(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 	}
 	for _, item := range data.Entities {
 		if item == nil {
-			return RepeatedNullErr
+			return ErrRepeatedNull
 		}
 		if err := s.encodeRef(item, pd, f); err != nil {
 			return err
