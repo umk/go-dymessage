@@ -8,31 +8,31 @@ import (
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
-func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
-	return s.DecodeInto(b, pd, pd.NewEntity())
+func (ec *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
+	return ec.DecodeInto(b, pd, pd.NewEntity())
 }
 
-func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
-	s.buf.SetBuf(b)
-	defer s.buf.Reset()
-	for !s.buf.Eob() {
-		t, err := s.buf.DecodeVarint()
+func (ec *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
+	ec.buf.SetBuf(b)
+	defer ec.buf.Reset()
+	for !ec.buf.Eob() {
+		t, err := ec.buf.DecodeVarint()
 		if err != nil {
 			return nil, err
 		}
 		wire, tag := t&7, t>>3
 		f, ok := pd.Fields[tag]
 		if !ok {
-			if !s.IgnoreUnknown {
+			if !ec.IgnoreUnknown {
 				message := fmt.Sprintf("Unexpected tag %d in the message", tag)
 				return nil, errors.New(message)
 			}
 			continue
 		}
 		if wire == WireBytes {
-			err = s.decodeRef(e, pd, f)
+			err = ec.decodeRef(e, pd, f)
 		} else {
-			err = s.decodeValue(e, wire, f)
+			err = ec.decodeValue(e, wire, f)
 		}
 		if err != nil {
 			return nil, err
@@ -41,8 +41,8 @@ func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, erro
 	return e, nil
 }
 
-func (s *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error {
-	value, err := s.buf.DecodeRawBytes(false)
+func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error {
+	value, err := ec.buf.DecodeRawBytes(false)
 	if err != nil {
 		return err
 	}
@@ -57,10 +57,8 @@ func (s *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error
 	var entity *Entity
 	if (f.DataType & DtEntity) != 0 {
 		def := pd.Registry.GetMessageDef(f.DataType)
-		enc := Encoder{
-			IgnoreUnknown: s.IgnoreUnknown,
-		}
-		entity, err = enc.Decode(value, def)
+		another := ec.clone()
+		entity, err = another.Decode(value, def)
 		if err != nil {
 			return err
 		}
@@ -83,16 +81,16 @@ func (s *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error
 	return nil
 }
 
-func (s *Encoder) decodeValue(e *Entity, wire uint64, f *MessageFieldDef) error {
+func (ec *Encoder) decodeValue(e *Entity, wire uint64, f *MessageFieldDef) error {
 	var value uint64
 	var err error
 	switch wire {
 	case WireVarint:
-		value, err = s.buf.DecodeVarint()
+		value, err = ec.buf.DecodeVarint()
 	case WireFixed32:
-		value, err = s.buf.DecodeFixed32()
+		value, err = ec.buf.DecodeFixed32()
 	case WireFixed64:
-		value, err = s.buf.DecodeFixed64()
+		value, err = ec.buf.DecodeFixed64()
 	default:
 		message := fmt.Sprintf("The wire format %d is not supported.", wire)
 		return errors.New(message)
