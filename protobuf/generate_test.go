@@ -26,11 +26,11 @@ func TestExport(t *testing.T) {
 		RegistryBuilder: NewRegistryBuilder(),
 	}
 	rb.CreateTestMessage("Cicada", "marten.colobus", "Cicada").
-		WithField("RegEntity", 100, rb.GetEntityType("Hoopoe")).
-		WithArrayField("ArrEntity", 101, rb.GetEntityType("Meerkat")).
+		WithField("RegEntity", 100, rb.ForMessageDef("Hoopoe").GetDataType()).
+		WithArrayField("ArrEntity", 101, rb.ForMessageDef("Meerkat").GetDataType()).
 		Build()
 	rb.CreateTestMessage("Hoopoe", "marten.colobus", "Hoopoe").
-		WithField("RegEntity", 100, rb.GetEntityType("Cicada")).
+		WithField("RegEntity", 100, rb.ForMessageDef("Cicada").GetDataType()).
 		Build()
 	rb.CreateTestMessage("Meerkat", "marten.heron", "Meerkat").
 		Build()

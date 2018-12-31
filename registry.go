@@ -17,10 +17,13 @@ type (
 	MessageDef struct {
 		Namespace string
 		Name      string
-		// A registry this definition belongs to.
-		Registry *Registry
+
+		Registry *Registry // A registry this definition belongs to
+		DataType DataType  // An entity data type represented by this instance
+
 		// A collection of fields that belong to the message.
 		Fields map[uint64]*MessageFieldDef
+
 		// Number of bytes taken by primitive values. These doesn't
 		// include the repeated values, which are represented by a
 		// separate entity.
@@ -47,11 +50,9 @@ type (
 // -----------------------------------------------------------------------------
 // Implementation
 
-// GetMessageDef gets the message definition by its data type. The message
-// definition can be obtained during the construction of the registry by calling
-// the GetEntityType method of RegistryBuilder.
+// GetMessageDef gets the message definition by its data type.
 func (r *Registry) GetMessageDef(dt DataType) *MessageDef {
-	id, n := int(dt &^ DtEntity), len(r.Defs)
+	id, n := int(dt&^DtEntity), len(r.Defs)
 	if id >= n {
 		message := fmt.Sprintf(
 			"expected message definition at %d, but got only %d definitions", id, n)
@@ -64,6 +65,7 @@ func (r *Registry) GetMessageDef(dt DataType) *MessageDef {
 // primitive and reference fields of the entity.
 func (md *MessageDef) NewEntity() *Entity {
 	return &Entity{
+		DataType: md.DataType,
 		Data:     make([]byte, md.DataBufLength),
 		Entities: make([]*Entity, md.EntityBufLength),
 	}

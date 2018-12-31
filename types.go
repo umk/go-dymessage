@@ -55,3 +55,7 @@ func (dt DataType) GetWidthInBytes() int {
 		panic(dt)
 	}
 }
+
+func getEntityDataType(index int) DataType {
+	return DtEntity | DataType(index)
+}

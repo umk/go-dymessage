@@ -9,6 +9,12 @@ type (
 	// entity with its own primitive and reference values, or the collection
 	// of either primitive or reference values, sharing the same type.
 	Entity struct {
+		// The data type the entity belongs to. This must be DtEntity
+		// OR'ed with an index of the message definition in a registry.
+		// Use the GetMessageDef method of Registry to obtain the
+		// message definition, providing the data type of an entity.
+		DataType DataType
+
 		Data     []byte    // Memory for storing the primitive values
 		Entities []*Entity // The entities referenced from the current one
 	}

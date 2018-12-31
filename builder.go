@@ -30,25 +30,23 @@ func NewRegistryBuilder() *RegistryBuilder {
 	}
 }
 
-func (rb *RegistryBuilder) AddMessageDef(key interface{}) *MessageDefBuilder {
-	def := rb.ensureDef(key)
-	if def.def != nil {
-		panic(fmt.Sprintf("entity %v has already been added at %v", key, def.index))
+func (rb *RegistryBuilder) ForMessageDef(key interface{}) *MessageDefBuilder {
+	if def, ok := rb.defs[key]; ok {
+		return def
 	}
-	def.def = &MessageDef{
-		Registry: rb.registry,
-		Fields:   make(map[uint64]*MessageFieldDef),
+	index := len(rb.defs)
+	rb.registry.Defs = append(rb.registry.Defs, nil)
+	def := &MessageDefBuilder{
+		index:    index,
+		registry: rb.registry,
+		def: &MessageDef{
+			Registry: rb.registry,
+			DataType: DtEntity | DataType(index),
+			Fields:   make(map[uint64]*MessageFieldDef),
+		},
 	}
+	rb.defs[key] = def
 	return def
-}
-
-// GetEntityType gets the data type of the field, which value is an entity. The
-// method accepts the key by which the entity is referenced in the repository
-// builder, and if necessary reserves an index for the proto definition. The
-// called is obliged to build the entity by provided key.
-func (rb *RegistryBuilder) GetEntityType(key interface{}) DataType {
-	def := rb.ensureDef(key)
-	return DtEntity | DataType(def.index)
 }
 
 func (rb *RegistryBuilder) Build() *Registry {
@@ -58,20 +56,6 @@ func (rb *RegistryBuilder) Build() *Registry {
 		}
 	}
 	return rb.registry
-}
-
-func (rb *RegistryBuilder) ensureDef(key interface{}) *MessageDefBuilder {
-	if def, ok := rb.defs[key]; ok {
-		return def
-	}
-	index := len(rb.defs)
-	rb.registry.Defs = append(rb.registry.Defs, nil)
-	def := &MessageDefBuilder{
-		index:    index,
-		registry: rb.registry,
-	}
-	rb.defs[key] = def
-	return def
 }
 
 // -----------------------------------------------------------------------------
@@ -108,6 +92,8 @@ func (mb *MessageDefBuilder) WithArrayField(
 	})
 	return mb
 }
+
+func (mb *MessageDefBuilder) GetDataType() DataType { return mb.def.DataType }
 
 func (mb *MessageDefBuilder) Build() *MessageDef {
 	if mb.registry.Defs[mb.index] != nil {

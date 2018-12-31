@@ -23,7 +23,7 @@ type (
 )
 
 func (rb *TestBuilder) CreateTestMessage(key interface{}, namespace, name string) *MessageDefBuilder {
-	return rb.AddMessageDef(key).
+	return rb.ForMessageDef(key).
 		WithNamespace(namespace).
 		WithName(name).
 		// regular fields
@@ -52,8 +52,8 @@ func ArrangeEncodeDecode() (*MessageDef, *Entity) {
 	rb := TestBuilder{NewRegistryBuilder()}
 
 	def := rb.CreateTestMessage("message", "koala.goshawk", "Message").
-		WithField("RegEntity", 10, rb.GetEntityType("message")).
-		WithArrayField("ArrEntity", 20, rb.GetEntityType("message")).
+		WithField("RegEntity", 10, rb.ForMessageDef("message").GetDataType()).
+		WithArrayField("ArrEntity", 20, rb.ForMessageDef("message").GetDataType()).
 		Build()
 
 	entity2 := def.NewEntity()
