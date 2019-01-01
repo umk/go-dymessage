@@ -1,6 +1,7 @@
 package protobuf
 
 import (
+	"fmt"
 	. "github.com/umk/go-dymessage"
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
@@ -32,19 +33,54 @@ func (ec *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
 }
 
 func (ec *Encoder) encodeValue(value uint64, f *MessageFieldDef) (err error) {
+	extension, ok := tryGetExtension(f)
+	if ok && extension.integerKind != ikDefault {
+		ik := extension.integerKind
+		return ec.encodeValueByKind(value, f, ik)
+	}
 	switch f.DataType {
+	case DtInt32:
+	case DtUint32:
 	case DtFloat32:
 		if err = ec.encodeTag(f.Tag, WireFixed32); err == nil {
 			err = ec.buf.EncodeFixed32(value)
 		}
+	case DtInt64:
+	case DtUint64:
 	case DtFloat64:
 		if err = ec.encodeTag(f.Tag, WireFixed64); err == nil {
 			err = ec.buf.EncodeFixed64(value)
 		}
-	default:
+	case DtBool:
 		if err = ec.encodeTag(f.Tag, WireVarint); err == nil {
 			err = ec.buf.EncodeVarint(value)
 		}
+	default:
+		panic(fmt.Sprintf("unsupported encoding data type %d", f.DataType))
+	}
+	return
+}
+
+func (ec *Encoder) encodeValueByKind(
+	value uint64, f *MessageFieldDef, ik integerKind) (err error) {
+	switch ik {
+	case ikVarint:
+		if err = ec.encodeTag(f.Tag, WireVarint); err == nil {
+			err = ec.buf.EncodeVarint(value)
+		}
+	case ikZigZag:
+		if err = ec.encodeTag(f.Tag, WireVarint); err == nil {
+			switch f.DataType {
+			case DtInt32:
+				err = ec.buf.EncodeZigzag32(value)
+			case DtInt64:
+				err = ec.buf.EncodeZigzag64(value)
+			default:
+				panic(fmt.Sprintf("ZigZag encoding is applied to invalid data type %d", f.DataType))
+			}
+		}
+	default:
+		panic(fmt.Sprintf("unsupported value of integer kind %d", ik))
 	}
 	return
 }

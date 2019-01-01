@@ -15,7 +15,7 @@ type Encoder struct {
 var ErrRepeatedNull = errors.New("repeated field has null item")
 
 func (ec *Encoder) clone() *Encoder {
-	return &Encoder {
+	return &Encoder{
 		IgnoreUnknown: ec.IgnoreUnknown,
 	}
 }

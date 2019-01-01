@@ -36,10 +36,15 @@ type (
 
 	// Represents a single field of a message.
 	MessageFieldDef struct {
-		Name     string
-		DataType DataType
-		Tag      uint64
-		Repeated bool
+		// A collection of extensions which alter the serialization and
+		// deserialization behavior of current field.
+		Extensions
+
+		Name     string   // A name of the field unique in bounds of the message definition
+		DataType DataType // Data type of the message field
+		Tag      uint64   // A tag unique in bounds of the message definition
+		Repeated bool     // Indicates whether the field contains a collection of items
+
 		// Offset of the field in the array of bytes if the field is of
 		// a primitive type and not repeated. Elsewhere, an index in the
 		// array of entities.

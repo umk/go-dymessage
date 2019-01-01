@@ -31,16 +31,28 @@ type (
 	}
 )
 
-var protoTypes = map[DataType]string{
-	DtInt32:   "int32",
-	DtInt64:   "int64",
-	DtUint32:  "uint32",
-	DtUint64:  "uint64",
+var defaultProtoTypes = map[DataType]string{
+	DtInt32:   "sfixed32",
+	DtInt64:   "sfixed64",
+	DtUint32:  "fixed32",
+	DtUint64:  "fixed64",
 	DtFloat32: "float",
 	DtFloat64: "double",
 	DtBool:    "bool",
 	DtString:  "string",
 	DtBytes:   "bytes",
+}
+
+var zigZagProtoTypes = map[DataType]string {
+	DtInt32: "sint32",
+	DtInt64: "sint64",
+}
+
+var varintProtoTypes = map[DataType]string {
+	DtInt32: "int32",
+	DtInt64: "int64",
+	DtUint32: "uint32",
+	DtUint64: "uint64",
 }
 
 // -----------------------------------------------------------------------------
@@ -135,13 +147,30 @@ func export(r *Registry, namespace string, defs map[string]*MessageDef, loc Expo
 	})
 }
 
+func getBuiltInTypeName(f *MessageFieldDef) string {
+	extension, ok := tryGetExtension(f)
+	if ok && extension.integerKind != ikDefault {
+		ik := extension.integerKind
+		switch ik {
+		case ikZigZag:
+			return zigZagProtoTypes[f.DataType]
+		case ikVarint:
+			return varintProtoTypes[f.DataType]
+		default:
+			panic(fmt.Sprintf("unsupported value of integer kind %d", ik))
+		}
+	} else {
+		if name, ok := defaultProtoTypes[f.DataType]; ok {
+			return name
+		}
+		panic(fmt.Sprintf("unable to determine name of the type %d", f.DataType))
+	}
+}
+
 func createTemplate(reg *Registry, ns string, loc ExportLocator) *template.Template {
 	return template.Must(
 		template.New("protodef").Funcs(template.FuncMap{
 			"typename": func(f *MessageFieldDef) string {
-				if name, ok := protoTypes[f.DataType]; ok {
-					return name
-				}
 				if (f.DataType & DtEntity) != 0 {
 					t := reg.GetMessageDef(f.DataType)
 					if ns == t.Namespace {
@@ -150,7 +179,7 @@ func createTemplate(reg *Registry, ns string, loc ExportLocator) *template.Templ
 						return "." + t.Name + "." + t.Name
 					}
 				} else {
-					panic("unknown data type")
+					return getBuiltInTypeName(f)
 				}
 			},
 			"fieldname": func(s string) string {

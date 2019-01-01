@@ -27,12 +27,15 @@ func (ec *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, err
 				message := fmt.Sprintf("Unexpected tag %d in the message", tag)
 				return nil, errors.New(message)
 			}
+			if err = ec.skipValue(wire); err != nil {
+				return nil, err
+			}
 			continue
 		}
 		if wire == WireBytes {
 			err = ec.decodeRef(e, pd, f)
 		} else {
-			err = ec.decodeValue(e, wire, f)
+			err = ec.decodeValue(e, f)
 		}
 		if err != nil {
 			return nil, err
@@ -45,11 +48,6 @@ func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 	value, err := ec.buf.DecodeRawBytes(false)
 	if err != nil {
 		return err
-	}
-	if f == nil {
-		// The field has not been found, but if we've managed to reach this point,
-		// it doesn't matter, so returning without an error.
-		return nil
 	}
 	if !f.DataType.IsRefType() {
 		return decodePacked(e, f, value)
@@ -81,24 +79,44 @@ func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 	return nil
 }
 
-func (ec *Encoder) decodeValue(e *Entity, wire uint64, f *MessageFieldDef) error {
-	var value uint64
-	var err error
+func (ec *Encoder) skipValue(wire uint64) (err error) {
 	switch wire {
 	case WireVarint:
-		value, err = ec.buf.DecodeVarint()
+		_, err = ec.buf.DecodeVarint()
 	case WireFixed32:
-		value, err = ec.buf.DecodeFixed32()
+		_, err = ec.buf.DecodeFixed32()
 	case WireFixed64:
-		value, err = ec.buf.DecodeFixed64()
+		_, err = ec.buf.DecodeFixed64()
+	case WireBytes:
+		_, err = ec.buf.DecodeRawBytes(false)
 	default:
 		message := fmt.Sprintf("The wire format %d is not supported.", wire)
-		return errors.New(message)
+		err = errors.New(message)
 	}
-	if f == nil {
-		// The field has not been found, but if we've managed to reach
-		// this point, it doesn't matter, so returning without an error.
-		return nil
+	return
+}
+
+func (ec *Encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
+	var value uint64
+	extension, ok := tryGetExtension(f)
+	if ok && extension.integerKind != ikDefault {
+		ik := extension.integerKind
+		value, err = ec.decodeValueByKind(f, ik)
+	} else {
+		switch f.DataType {
+		case DtInt32:
+		case DtUint32:
+		case DtFloat32:
+			value, err = ec.buf.DecodeFixed32()
+		case DtInt64:
+		case DtUint64:
+		case DtFloat64:
+			value, err = ec.buf.DecodeFixed64()
+		case DtBool:
+			value, err = ec.buf.DecodeVarint()
+		default:
+			panic(fmt.Sprintf("unsupported decoding data type %d", f.DataType))
+		}
 	}
 	if err == nil {
 		if f.Repeated {
@@ -109,14 +127,30 @@ func (ec *Encoder) decodeValue(e *Entity, wire uint64, f *MessageFieldDef) error
 			}
 			n := f.Reserve(entity, 1)
 			f.SetPrimitiveAt(entity, n, Primitive(value))
-			if err != nil {
-				panic(err)
-			}
 		} else {
 			f.SetPrimitive(e, Primitive(value))
 		}
 	}
 	return err
+}
+
+func (ec *Encoder) decodeValueByKind(
+	f *MessageFieldDef, ik integerKind) (uint64, error) {
+	switch ik {
+	case ikVarint:
+		return ec.buf.DecodeVarint()
+	case ikZigZag:
+		switch f.DataType {
+		case DtInt32:
+			return ec.buf.DecodeZigzag32()
+		case DtInt64:
+			return ec.buf.DecodeZigzag64()
+		default:
+			panic(fmt.Sprintf("ZigZag encoding is applied to invalid data type %d", f.DataType))
+		}
+	default:
+		panic(fmt.Sprintf("unsupported value of integer kind %d", ik))
+	}
 }
 
 func decodePacked(e *Entity, f *MessageFieldDef, value []byte) error {

@@ -204,6 +204,30 @@ func (p *Buffer) DecodeFixed32() (x uint64, err error) {
 	return
 }
 
+// DecodeZigzag64 reads a zigzag-encoded 64-bit integer
+// from the Buffer.
+// This is the format used for the sint64 protocol buffer type.
+func (p *Buffer) DecodeZigzag64() (x uint64, err error) {
+	x, err = p.DecodeVarint()
+	if err != nil {
+		return
+	}
+	x = (x >> 1) ^ uint64((int64(x&1)<<63)>>63)
+	return
+}
+
+// DecodeZigzag32 reads a zigzag-encoded 32-bit integer
+// from  the Buffer.
+// This is the format used for the sint32 protocol buffer type.
+func (p *Buffer) DecodeZigzag32() (x uint64, err error) {
+	x, err = p.DecodeVarint()
+	if err != nil {
+		return
+	}
+	x = uint64((uint32(x) >> 1) ^ uint32((int32(x&1)<<31)>>31))
+	return
+}
+
 // DecodeRawBytes reads a count-delimited byte buffer from the Buffer.
 // This is the format used for the bytes protocol buffer
 // type and for embedded messages.
