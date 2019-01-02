@@ -43,14 +43,14 @@ var defaultProtoTypes = map[DataType]string{
 	DtBytes:   "bytes",
 }
 
-var zigZagProtoTypes = map[DataType]string {
+var zigZagProtoTypes = map[DataType]string{
 	DtInt32: "sint32",
 	DtInt64: "sint64",
 }
 
-var varintProtoTypes = map[DataType]string {
-	DtInt32: "int32",
-	DtInt64: "int64",
+var varintProtoTypes = map[DataType]string{
+	DtInt32:  "int32",
+	DtInt64:  "int64",
 	DtUint32: "uint32",
 	DtUint64: "uint64",
 }
