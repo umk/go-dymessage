@@ -104,13 +104,9 @@ func (ec *Encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 		value, err = ec.decodeValueByKind(f, ik)
 	} else {
 		switch f.DataType {
-		case DtInt32:
-		case DtUint32:
-		case DtFloat32:
+		case DtInt32, DtUint32, DtFloat32:
 			value, err = ec.buf.DecodeFixed32()
-		case DtInt64:
-		case DtUint64:
-		case DtFloat64:
+		case DtInt64, DtUint64, DtFloat64:
 			value, err = ec.buf.DecodeFixed64()
 		case DtBool:
 			value, err = ec.buf.DecodeVarint()

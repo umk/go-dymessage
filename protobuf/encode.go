@@ -39,15 +39,11 @@ func (ec *Encoder) encodeValue(value uint64, f *MessageFieldDef) (err error) {
 		return ec.encodeValueByKind(value, f, ik)
 	}
 	switch f.DataType {
-	case DtInt32:
-	case DtUint32:
-	case DtFloat32:
+	case DtInt32, DtUint32, DtFloat32:
 		if err = ec.encodeTag(f.Tag, WireFixed32); err == nil {
 			err = ec.buf.EncodeFixed32(value)
 		}
-	case DtInt64:
-	case DtUint64:
-	case DtFloat64:
+	case DtInt64, DtUint64, DtFloat64:
 		if err = ec.encodeTag(f.Tag, WireFixed64); err == nil {
 			err = ec.buf.EncodeFixed64(value)
 		}
