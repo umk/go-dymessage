@@ -50,7 +50,7 @@ func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 		return err
 	}
 	if !f.DataType.IsRefType() {
-		return decodePacked(e, f, value)
+		return ec.decodeValuePacked(e, f, value)
 	}
 	var entity *Entity
 	if (f.DataType & DtEntity) != 0 {
@@ -100,19 +100,9 @@ func (ec *Encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 	var value uint64
 	extension, ok := tryGetExtension(f)
 	if ok && extension.integerKind != ikDefault {
-		ik := extension.integerKind
-		value, err = ec.decodeValueByKind(f, ik)
+		value, err = ec.decodeValueByKind(f, extension.integerKind)
 	} else {
-		switch f.DataType {
-		case DtInt32, DtUint32, DtFloat32:
-			value, err = ec.buf.DecodeFixed32()
-		case DtInt64, DtUint64, DtFloat64:
-			value, err = ec.buf.DecodeFixed64()
-		case DtBool:
-			value, err = ec.buf.DecodeVarint()
-		default:
-			panic(fmt.Sprintf("unsupported decoding data type %d", f.DataType))
-		}
+		value, err = ec.decodeValueDefault(f)
 	}
 	if err == nil {
 		if f.Repeated {
@@ -130,8 +120,41 @@ func (ec *Encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 	return err
 }
 
-func (ec *Encoder) decodeValueByKind(
-	f *MessageFieldDef, ik integerKind) (uint64, error) {
+func (ec *Encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte) (err error) {
+	another := ec.clone()
+	another.buf.SetBuf(value)
+	extension, ok := tryGetExtension(f)
+	for !another.buf.Eob() {
+		var i uint64
+		if ok && extension.integerKind != ikDefault {
+			i, err = another.decodeValueByKind(f, extension.integerKind)
+		} else {
+			i, err = another.decodeValueDefault(f)
+		}
+		if err != nil {
+			return
+		}
+		n := f.Reserve(e, 1)
+		f.SetPrimitiveAt(e, n, Primitive(i))
+	}
+	return
+}
+
+func (ec *Encoder) decodeValueDefault(f *MessageFieldDef) (value uint64, err error) {
+	switch f.DataType {
+	case DtInt32, DtUint32, DtFloat32:
+		value, err = ec.buf.DecodeFixed32()
+	case DtInt64, DtUint64, DtFloat64:
+		value, err = ec.buf.DecodeFixed64()
+	case DtBool:
+		value, err = ec.buf.DecodeVarint()
+	default:
+		panic(fmt.Sprintf("unsupported decoding data type %d", f.DataType))
+	}
+	return
+}
+
+func (ec *Encoder) decodeValueByKind(f *MessageFieldDef, ik integerKind) (uint64, error) {
 	switch ik {
 	case ikVarint:
 		return ec.buf.DecodeVarint()
@@ -147,28 +170,4 @@ func (ec *Encoder) decodeValueByKind(
 	default:
 		panic(fmt.Sprintf("unsupported value of integer kind %d", ik))
 	}
-}
-
-func decodePacked(e *Entity, f *MessageFieldDef, value []byte) error {
-	buf := NewBuffer(value)
-	var err error
-	for !buf.Eob() {
-		var i uint64
-		switch f.DataType {
-		case DtInt32, DtInt64, DtUint32, DtUint64, DtBool:
-			i, err = buf.DecodeVarint()
-		case DtFloat32:
-			i, err = buf.DecodeFixed32()
-		case DtFloat64:
-			i, err = buf.DecodeFixed64()
-		default:
-			panic("unexpected data type")
-		}
-		if err != nil {
-			return err
-		}
-		n := f.Reserve(e, 1)
-		f.SetPrimitiveAt(e, n, Primitive(i))
-	}
-	return nil
 }
