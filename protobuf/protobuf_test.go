@@ -1,17 +1,58 @@
 package protobuf
 
 import (
+	"github.com/umk/go-dymessage"
+	"github.com/umk/go-dymessage/protobuf/internal/testdata"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
 	. "github.com/umk/go-dymessage/internal/testing"
-	"github.com/umk/go-dymessage/protobuf/internal/testdata"
 )
 
-func TestEncodeDecode(t *testing.T) {
+func TestEncodeDecodeRegular(t *testing.T) {
+	testEncodeDecode(
+		t,
+		new(testdata.TestMessageRegular),
+		func(*dymessage.MessageDef) {})
+}
+
+func TestEncodeDecodeVarint(t *testing.T) {
+	testEncodeDecode(
+		t,
+		new(testdata.TestMessageVarint),
+		func(def *dymessage.MessageDef) {
+			// Regular fields
+			WithVarint()(def.Fields[TagRegInt32])
+			WithVarint()(def.Fields[TagRegInt64])
+			WithVarint()(def.Fields[TagRegUint32])
+			WithVarint()(def.Fields[TagRegUint64])
+			// Array fields
+			WithVarint()(def.Fields[TagArrInt32])
+			WithVarint()(def.Fields[TagArrInt64])
+			WithVarint()(def.Fields[TagArrUint32])
+			WithVarint()(def.Fields[TagArrUint64])
+		})
+}
+
+func TestEncodeDecodeZigzag(t *testing.T) {
+	testEncodeDecode(
+		t,
+		new(testdata.TestMessageZigzag),
+		func (def *dymessage.MessageDef) {
+			// Regular fields
+			WithVarint()(def.Fields[TagRegInt32])
+			WithVarint()(def.Fields[TagRegInt64])
+			// Array fields
+			WithVarint()(def.Fields[TagArrInt32])
+			WithVarint()(def.Fields[TagArrInt64])
+		})
+}
+
+func testEncodeDecode(t *testing.T, message proto.Message, setup func(*dymessage.MessageDef)) {
 	def, entity := ArrangeEncodeDecode()
+	setup(def)
 
 	// Checking whether the message can be read right after is has been composed.
 	AssertEncodeDecode(t, def, entity)
@@ -21,7 +62,6 @@ func TestEncodeDecode(t *testing.T) {
 	data, err := enc.Encode(entity, def)
 	require.NoError(t, err)
 
-	message := new(testdata.TestMessage)
 	err = proto.Unmarshal(data, message)
 	require.NoError(t, err)
 

@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package testdata;
 
-message TestMessage
+message TestMessageRegular
 {
     sfixed32 RegInt32 = 1;
 
@@ -22,7 +22,7 @@ message TestMessage
 
     bytes RegBytes = 9;
 
-    TestMessage RegEntity = 10;
+    TestMessageRegular RegEntity = 10;
 
     repeated sfixed32 ArrInt32 = 11;
 
@@ -42,5 +42,5 @@ message TestMessage
 
     repeated bytes ArrBytes = 19;
 
-    repeated TestMessage ArrEntity = 20;
+    repeated TestMessageRegular ArrEntity = 20;
 }
