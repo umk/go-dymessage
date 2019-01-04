@@ -60,6 +60,7 @@ func withIntegerKind(
 					panic("kind of integer has already been specified")
 				}
 				extension.integerKind = kind
+				return
 			}
 		}
 		panic(fmt.Sprintf("field is of an invalid type %d", def.DataType))

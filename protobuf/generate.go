@@ -176,7 +176,7 @@ func createTemplate(reg *Registry, ns string, loc ExportLocator) *template.Templ
 					if ns == t.Namespace {
 						return t.Name
 					} else {
-						return "." + t.Name + "." + t.Name
+						return "." + t.Namespace + "." + t.Name
 					}
 				} else {
 					return getBuiltInTypeName(f)

@@ -28,6 +28,13 @@ func TestExport(t *testing.T) {
 	rb.CreateTestMessage("Cicada", "marten.colobus", "Cicada").
 		WithField("RegEntity", 100, rb.ForMessageDef("Hoopoe").GetDataType()).
 		WithArrayField("ArrEntity", 101, rb.ForMessageDef("Meerkat").GetDataType()).
+		// extended fields
+		WithField("RegZigzagInt32", 200, DtInt32).ExtendField(WithZigZag()).
+		WithField("RegZigzagInt64", 201, DtInt64).ExtendField(WithZigZag()).
+		WithField("RegVarintInt32", 202, DtInt32).ExtendField(WithVarint()).
+		WithField("RegVarintInt64", 203, DtInt64).ExtendField(WithVarint()).
+		WithField("RegVarintUint32", 204, DtUint32).ExtendField(WithVarint()).
+		WithField("RegVarintUint64", 205, DtUint64).ExtendField(WithVarint()).
 		Build()
 	rb.CreateTestMessage("Hoopoe", "marten.colobus", "Hoopoe").
 		WithField("RegEntity", 100, rb.ForMessageDef("Cicada").GetDataType()).

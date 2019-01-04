@@ -14,9 +14,9 @@ type (
 		// Index of this message definition in the registry.
 		index    int
 		registry *Registry
-		// Dynamic message definition which is being built by this
-		// instance of builder.
-		def *MessageDef
+
+		message *MessageDef      // Message definition being built by this builder
+		field   *MessageFieldDef // Field definition added the last time
 	}
 )
 
@@ -39,7 +39,7 @@ func (rb *RegistryBuilder) ForMessageDef(key interface{}) *MessageDefBuilder {
 	def := &MessageDefBuilder{
 		index:    index,
 		registry: rb.registry,
-		def: &MessageDef{
+		message: &MessageDef{
 			Registry: rb.registry,
 			DataType: DtEntity | DataType(index),
 			Fields:   make(map[uint64]*MessageFieldDef),
@@ -62,12 +62,12 @@ func (rb *RegistryBuilder) Build() *Registry {
 // Message definition builder
 
 func (mb *MessageDefBuilder) WithName(name string) *MessageDefBuilder {
-	mb.def.Name = name
+	mb.message.Name = name
 	return mb
 }
 
 func (mb *MessageDefBuilder) WithNamespace(name string) *MessageDefBuilder {
-	mb.def.Namespace = name
+	mb.message.Namespace = name
 	return mb
 }
 
@@ -93,25 +93,41 @@ func (mb *MessageDefBuilder) WithArrayField(
 	return mb
 }
 
-func (mb *MessageDefBuilder) GetDataType() DataType { return mb.def.DataType }
+// ExtendField updates the last time added field with an extension, which may
+// alter the way the field is serialized or deserialized.
+func (mb *MessageDefBuilder) ExtendField(ext func(*MessageFieldDef)) *MessageDefBuilder {
+	ext(mb.ensureFieldDef())
+	return mb
+}
+
+func (mb *MessageDefBuilder) GetDataType() DataType { return mb.message.DataType }
 
 func (mb *MessageDefBuilder) Build() *MessageDef {
 	if mb.registry.Defs[mb.index] != nil {
 		panic(fmt.Sprintf("message definition at %v has already been built", mb.index))
 	}
-	mb.registry.Defs[mb.index] = mb.def
-	return mb.def
+	mb.registry.Defs[mb.index] = mb.message
+	return mb.message
 }
 
 func (mb *MessageDefBuilder) addField(tag uint64, f *MessageFieldDef) {
 	// Getting an offset of the value either in the primitive values array
 	// or the references array.
 	if f.DataType.IsRefType() || f.Repeated {
-		f.Offset = mb.def.EntityBufLength
-		mb.def.EntityBufLength++
+		f.Offset = mb.message.EntityBufLength
+		mb.message.EntityBufLength++
 	} else {
-		f.Offset = mb.def.DataBufLength
-		mb.def.DataBufLength += f.DataType.GetWidthInBytes()
+		f.Offset = mb.message.DataBufLength
+		mb.message.DataBufLength += f.DataType.GetWidthInBytes()
 	}
-	mb.def.Fields[tag] = f
+	mb.message.Fields[tag] = f
+	mb.field = f
+}
+
+func (mb *MessageDefBuilder) ensureFieldDef() *MessageFieldDef {
+	current := mb.field
+	if current == nil {
+		panic("method cannot be called before a field is added")
+	}
+	return current
 }

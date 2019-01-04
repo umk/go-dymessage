@@ -44,7 +44,19 @@ message Cicada
 
 	Hoopoe reg_entity = 100;
 
-	repeated .Meerkat.Meerkat arr_entity = 101;
+	repeated .marten.heron.Meerkat arr_entity = 101;
+
+	sint32 reg_zigzag_int32 = 200;
+
+	sint64 reg_zigzag_int64 = 201;
+
+	int32 reg_varint_int32 = 202;
+
+	int64 reg_varint_int64 = 203;
+
+	uint32 reg_varint_uint32 = 204;
+
+	uint64 reg_varint_uint64 = 205;
 }
 
 message Hoopoe
