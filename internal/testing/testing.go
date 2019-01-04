@@ -151,11 +151,11 @@ func ArrangeEncodeDecode() (*MessageDef, *Entity) {
 }
 
 func AssertEncodeDecode(t *testing.T, def *MessageDef, entity *Entity) {
-	ref := def.Fields[10].GetReference(entity)
+	ref := def.Fields[TagRegEntity].GetReference(entity)
 	require.NotNil(t, ref)
 	linnet := ref.ToEntity()
 
-	require.Equal(t, 3, def.Fields[20].Len(linnet))
+	require.Equal(t, 3, def.Fields[TagArrEntity].Len(linnet))
 
 	assert.Equal(t, int32(-33512104), def.Fields[TagRegInt32].GetPrimitive(entity).ToInt32())
 	assert.Equal(t, int64(-254715376635680503), def.Fields[TagRegInt64].GetPrimitive(entity).ToInt64())
