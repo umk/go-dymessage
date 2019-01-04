@@ -6,8 +6,8 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/require"
 
-	"github.com/umk/go-dymessage/internal/testdata"
 	. "github.com/umk/go-dymessage/internal/testing"
+	"github.com/umk/go-dymessage/protobuf/internal/testdata"
 )
 
 func TestEncodeDecode(t *testing.T) {

@@ -21,24 +21,48 @@ type testLocator struct {
 	bufs map[string]*strings.Builder
 }
 
+const (
+	TagCicadaRegEntity = iota + 100
+	TagCicadaArrEntity
+)
+
+const (
+	TagCicadaRegZigzagInt32 = iota + 200
+	TagCicadaRegZigzagInt64
+	TagCicadaRegVarintInt32
+	TagCicadaRegVarintInt64
+	TagCicadaRegVarintUint32
+	TagCicadaRegVarintUint64
+)
+
+const (
+	TagHoopoeRegEntity = iota + 100
+)
+
 func TestExport(t *testing.T) {
 	rb := TestBuilder{
 		RegistryBuilder: NewRegistryBuilder(),
 	}
+
+	// Cicada
 	rb.CreateTestMessage("Cicada", "marten.colobus", "Cicada").
-		WithField("RegEntity", 100, rb.ForMessageDef("Hoopoe").GetDataType()).
-		WithArrayField("ArrEntity", 101, rb.ForMessageDef("Meerkat").GetDataType()).
+		WithField("RegEntity", TagCicadaRegEntity, rb.ForMessageDef("Hoopoe").GetDataType()).
+		WithArrayField("ArrEntity", TagCicadaArrEntity, rb.ForMessageDef("Meerkat").GetDataType()).
 		// extended fields
-		WithField("RegZigzagInt32", 200, DtInt32).ExtendField(WithZigZag()).
-		WithField("RegZigzagInt64", 201, DtInt64).ExtendField(WithZigZag()).
-		WithField("RegVarintInt32", 202, DtInt32).ExtendField(WithVarint()).
-		WithField("RegVarintInt64", 203, DtInt64).ExtendField(WithVarint()).
-		WithField("RegVarintUint32", 204, DtUint32).ExtendField(WithVarint()).
-		WithField("RegVarintUint64", 205, DtUint64).ExtendField(WithVarint()).
+		WithField("RegZigzagInt32", TagCicadaRegZigzagInt32, DtInt32).ExtendField(WithZigZag()).
+		WithField("RegZigzagInt64", TagCicadaRegZigzagInt64, DtInt64).ExtendField(WithZigZag()).
+		WithField("RegVarintInt32", TagCicadaRegVarintInt32, DtInt32).ExtendField(WithVarint()).
+		WithField("RegVarintInt64", TagCicadaRegVarintInt64, DtInt64).ExtendField(WithVarint()).
+		WithField("RegVarintUint32", TagCicadaRegVarintUint32, DtUint32).ExtendField(WithVarint()).
+		WithField("RegVarintUint64", TagCicadaRegVarintUint64, DtUint64).ExtendField(WithVarint()).
 		Build()
+
+	// Hoopoe
 	rb.CreateTestMessage("Hoopoe", "marten.colobus", "Hoopoe").
-		WithField("RegEntity", 100, rb.ForMessageDef("Cicada").GetDataType()).
+		WithField("RegEntity", TagHoopoeRegEntity, rb.ForMessageDef("Cicada").GetDataType()).
 		Build()
+
+	// Meerkat
 	rb.CreateTestMessage("Meerkat", "marten.heron", "Meerkat").
 		Build()
 
@@ -49,7 +73,7 @@ func TestExport(t *testing.T) {
 	require.Len(t, loc.bufs, 2)
 
 	wd, _ := os.Getwd()
-	root := filepath.Join(wd, "../internal/testdata")
+	root := filepath.Join(wd, "internal/testdata")
 
 	if testutil.DoFix() {
 		_ = os.MkdirAll(root, os.ModeDir|os.ModePerm)
