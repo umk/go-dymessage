@@ -92,10 +92,10 @@ func (f *FileSystemLocator) GetImport(ns string) string {
 // -----------------------------------------------------------------------------
 // Export
 
-// ExportProto transforms the whole registry into the .proto files, so the
-// clients of the application, which use the dynamic messages library, could
-// generate their own sources on their favorite languages and then communicate
-// with the application.
+// ExportProto transforms the messages in a whole registry into the .proto
+// version 3 files, so the clients of the application could generate their own
+// sources on their favorite languages with protoc and then communicate with the
+// application.
 func ExportProto(r *Registry, loc ExportLocator) error {
 	files := make(map[string]map[string]*MessageDef)
 	for _, def := range r.Defs {
