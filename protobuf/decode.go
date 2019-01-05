@@ -32,7 +32,7 @@ func (ec *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, err
 			return nil, err
 		}
 		wire, tag := t&7, t>>3
-		f, ok := pd.Fields[tag]
+		f, ok := pd.TryGetField(tag)
 		if !ok {
 			if !ec.IgnoreUnknown {
 				message := fmt.Sprintf("Unexpected tag %d in the message", tag)

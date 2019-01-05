@@ -24,15 +24,15 @@ func TestEncodeDecodeVarint(t *testing.T) {
 		new(testdata.TestMessageVarint),
 		func(def *dymessage.MessageDef) {
 			// Regular fields
-			WithVarint()(def.Fields[TagRegInt32])
-			WithVarint()(def.Fields[TagRegInt64])
-			WithVarint()(def.Fields[TagRegUint32])
-			WithVarint()(def.Fields[TagRegUint64])
+			WithVarint()(def.GetField(TagRegInt32))
+			WithVarint()(def.GetField(TagRegInt64))
+			WithVarint()(def.GetField(TagRegUint32))
+			WithVarint()(def.GetField(TagRegUint64))
 			// Array fields
-			WithVarint()(def.Fields[TagArrInt32])
-			WithVarint()(def.Fields[TagArrInt64])
-			WithVarint()(def.Fields[TagArrUint32])
-			WithVarint()(def.Fields[TagArrUint64])
+			WithVarint()(def.GetField(TagArrInt32))
+			WithVarint()(def.GetField(TagArrInt64))
+			WithVarint()(def.GetField(TagArrUint32))
+			WithVarint()(def.GetField(TagArrUint64))
 		})
 }
 
@@ -42,11 +42,11 @@ func TestEncodeDecodeZigzag(t *testing.T) {
 		new(testdata.TestMessageZigzag),
 		func(def *dymessage.MessageDef) {
 			// Regular fields
-			WithVarint()(def.Fields[TagRegInt32])
-			WithVarint()(def.Fields[TagRegInt64])
+			WithVarint()(def.GetField(TagRegInt32))
+			WithVarint()(def.GetField(TagRegInt64))
 			// Array fields
-			WithVarint()(def.Fields[TagArrInt32])
-			WithVarint()(def.Fields[TagArrInt64])
+			WithVarint()(def.GetField(TagArrInt32))
+			WithVarint()(def.GetField(TagArrInt64))
 		})
 }
 

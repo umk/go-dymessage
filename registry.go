@@ -22,7 +22,7 @@ type (
 		DataType DataType  // An entity data type represented by this instance
 
 		// A collection of fields that belong to the message.
-		Fields map[uint64]*MessageFieldDef
+		Fields []*MessageFieldDef
 
 		// Number of bytes taken by primitive values. These doesn't
 		// include the repeated values, which are represented by a
@@ -74,4 +74,27 @@ func (md *MessageDef) NewEntity() *Entity {
 		Data:     make([]byte, md.DataBufLength),
 		Entities: make([]*Entity, md.EntityBufLength),
 	}
+}
+
+// TryGetField gets the field with specified tag from the message definition. If
+// field doesn't exist, it returns the false flag.
+func (md *MessageDef) TryGetField(tag uint64) (*MessageFieldDef, bool) {
+	// For the small number of fields (up to ~30, which must be the majority
+	// of the cases) the brute-force search is more effective than using a
+	// map.
+	for _, def := range md.Fields {
+		if def.Tag == tag {
+			return def, true
+		}
+	}
+	return nil, false
+}
+
+// GetField gets the field with specified tag from the message definition. If
+// field doesn't exist, the method panics.
+func (md *MessageDef) GetField(tag uint64) *MessageFieldDef {
+	if def, ok := md.TryGetField(tag); ok {
+		return def
+	}
+	panic(fmt.Sprintf("entity doesn't contain the field with tag %d", tag))
 }
