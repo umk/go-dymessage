@@ -111,8 +111,8 @@ func (ec *Encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 				entity = &Entity{}
 				e.Entities[f.Offset] = entity
 			}
-			n := f.Reserve(entity, 1)
-			f.SetPrimitiveAt(entity, n, Primitive(value))
+			n := f.Reserve(e, 1)
+			f.SetPrimitiveAt(e, n, Primitive(value))
 		} else {
 			f.SetPrimitive(e, Primitive(value))
 		}
