@@ -2,15 +2,15 @@ syntax = "proto3";
 
 package testdata;
 
-message TestMessage
+message TestMessageZigzag
 {
-    int32 RegInt32 = 1;
+    sint32 RegInt32 = 1;
 
-    int64 RegInt64 = 2;
+    sint64 RegInt64 = 2;
 
-    uint32 RegUint32 = 3;
+    fixed32 RegUint32 = 3;
 
-    uint64 RegUint64 = 4;
+    fixed64 RegUint64 = 4;
 
     float RegFloat32 = 5;
 
@@ -22,15 +22,15 @@ message TestMessage
 
     bytes RegBytes = 9;
 
-    TestMessage RegEntity = 10;
+    TestMessageZigzag RegEntity = 10;
 
-    repeated int32 ArrInt32 = 11;
+    repeated sint32 ArrInt32 = 11;
 
-    repeated int64 ArrInt64 = 12;
+    repeated sint64 ArrInt64 = 12;
 
-    repeated uint32 ArrUint32 = 13;
+    repeated fixed32 ArrUint32 = 13;
 
-    repeated uint64 ArrUint64 = 14;
+    repeated fixed64 ArrUint64 = 14;
 
     repeated float ArrFloat32 = 15;
 
@@ -42,5 +42,5 @@ message TestMessage
 
     repeated bytes ArrBytes = 19;
 
-    repeated TestMessage ArrEntity = 20;
+    repeated TestMessageZigzag ArrEntity = 20;
 }

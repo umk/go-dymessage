@@ -1,0 +1,101 @@
+syntax = "proto3";
+
+package marten.colobus;
+
+import "marten.heron.proto";
+
+message Cicada
+{
+	sfixed32 reg_int32 = 1;
+
+	sfixed64 reg_int64 = 2;
+
+	fixed32 reg_uint32 = 3;
+
+	fixed64 reg_uint64 = 4;
+
+	float reg_float32 = 5;
+
+	double reg_float64 = 6;
+
+	bool reg_bool = 7;
+
+	string reg_string = 8;
+
+	bytes reg_bytes = 9;
+
+	repeated sfixed32 arr_int32 = 11;
+
+	repeated sfixed64 arr_int64 = 12;
+
+	repeated fixed32 arr_uint32 = 13;
+
+	repeated fixed64 arr_uint64 = 14;
+
+	repeated float arr_float32 = 15;
+
+	repeated double arr_float64 = 16;
+
+	repeated bool arr_bool = 17;
+
+	repeated string arr_string = 18;
+
+	repeated bytes arr_bytes = 19;
+
+	Hoopoe reg_entity = 100;
+
+	repeated .marten.heron.Meerkat arr_entity = 101;
+
+	sint32 reg_zigzag_int32 = 200;
+
+	sint64 reg_zigzag_int64 = 201;
+
+	int32 reg_varint_int32 = 202;
+
+	int64 reg_varint_int64 = 203;
+
+	uint32 reg_varint_uint32 = 204;
+
+	uint64 reg_varint_uint64 = 205;
+}
+
+message Hoopoe
+{
+	sfixed32 reg_int32 = 1;
+
+	sfixed64 reg_int64 = 2;
+
+	fixed32 reg_uint32 = 3;
+
+	fixed64 reg_uint64 = 4;
+
+	float reg_float32 = 5;
+
+	double reg_float64 = 6;
+
+	bool reg_bool = 7;
+
+	string reg_string = 8;
+
+	bytes reg_bytes = 9;
+
+	repeated sfixed32 arr_int32 = 11;
+
+	repeated sfixed64 arr_int64 = 12;
+
+	repeated fixed32 arr_uint32 = 13;
+
+	repeated fixed64 arr_uint64 = 14;
+
+	repeated float arr_float32 = 15;
+
+	repeated double arr_float64 = 16;
+
+	repeated bool arr_bool = 17;
+
+	repeated string arr_string = 18;
+
+	repeated bytes arr_bytes = 19;
+
+	Cicada reg_entity = 100;
+}

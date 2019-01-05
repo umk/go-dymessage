@@ -1,17 +1,17 @@
 syntax = "proto3";
 
-package ns1.ns3;
+package marten.heron;
 
 
-message Message3
+message Meerkat
 {
-	int32 reg_int32 = 1;
+	sfixed32 reg_int32 = 1;
 
-	int64 reg_int64 = 2;
+	sfixed64 reg_int64 = 2;
 
-	uint32 reg_uint32 = 3;
+	fixed32 reg_uint32 = 3;
 
-	uint64 reg_uint64 = 4;
+	fixed64 reg_uint64 = 4;
 
 	float reg_float32 = 5;
 
@@ -23,13 +23,13 @@ message Message3
 
 	bytes reg_bytes = 9;
 
-	repeated int32 arr_int32 = 11;
+	repeated sfixed32 arr_int32 = 11;
 
-	repeated int64 arr_int64 = 12;
+	repeated sfixed64 arr_int64 = 12;
 
-	repeated uint32 arr_uint32 = 13;
+	repeated fixed32 arr_uint32 = 13;
 
-	repeated uint64 arr_uint64 = 14;
+	repeated fixed64 arr_uint64 = 14;
 
 	repeated float arr_float32 = 15;
 

@@ -13,3 +13,6 @@
 
 # Protocol buffers generated code
 *.pb.go
+
+# Miscellaneous
+/.testcover

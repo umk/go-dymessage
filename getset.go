@@ -1,134 +1,105 @@
 package dymessage
 
 import (
-	"errors"
 	"fmt"
-
-	"github.com/umk/go-memutil"
+	"github.com/umk/go-dymessage/internal/memory"
 )
 
-var IndexOutOfRangeErr = errors.New("index is out of range")
-
-var primitiveDefault = Primitive(0)
-
-func (f *ProtoField) GetValue(e *Entity) Primitive {
-	data, _ := f.getData(e, f.index)
-	return Primitive(data)
+func (f *MessageFieldDef) GetPrimitive(e *Entity) Primitive {
+	return Primitive(f.getPrimitive(e, f.Offset))
 }
 
-func (f *ProtoField) GetValueAt(e *Entity, n int) (Primitive, error) {
-	data := e.Entities[f.index]
-	if data == nil {
-		return primitiveDefault, IndexOutOfRangeErr
-	} else {
-		return f.getData(data, f.DataType.getSize()*n)
-	}
+func (f *MessageFieldDef) GetPrimitiveAt(e *Entity, n int) Primitive {
+	data := e.Entities[f.Offset]
+	return f.getPrimitive(data, f.DataType.GetWidthInBytes()*n)
 }
 
-func (f *ProtoField) SetValue(e *Entity, value Primitive) {
-	f.setData(e, f.index, value)
+func (f *MessageFieldDef) SetPrimitive(e *Entity, value Primitive) {
+	f.setPrimitive(e, f.Offset, value)
 }
 
-func (f *ProtoField) SetValueAt(e *Entity, n int, value Primitive) error {
-	data := e.Entities[f.index]
-	if data == nil {
-		return IndexOutOfRangeErr
-	} else {
-		return f.setData(data, f.DataType.getSize()*n, value)
-	}
+func (f *MessageFieldDef) SetPrimitiveAt(e *Entity, n int, value Primitive) {
+	data := e.Entities[f.Offset]
+	f.setPrimitive(data, f.DataType.GetWidthInBytes()*n, value)
 }
 
-func (f *ProtoField) GetEntity(e *Entity) *Reference {
-	return (*Reference)(e.Entities[f.index])
+func (f *MessageFieldDef) GetReference(e *Entity) Reference {
+	return Reference{e.Entities[f.Offset]}
 }
 
-func (f *ProtoField) GetEntityAt(e *Entity, n int) (*Reference, error) {
-	data := e.Entities[f.index]
-	if data == nil || len(data.Entities) <= n {
-		return nil, IndexOutOfRangeErr
-	} else {
-		return (*Reference)(data.Entities[n]), nil
-	}
+func (f *MessageFieldDef) GetReferenceAt(e *Entity, n int) Reference {
+	data := e.Entities[f.Offset]
+	return Reference{data.Entities[n]}
 }
 
-func (f *ProtoField) SetEntity(e *Entity, value *Reference) {
-	e.Entities[f.index] = (*Entity)(value)
+func (f *MessageFieldDef) SetReference(e *Entity, value Reference) {
+	e.Entities[f.Offset] = value.Entity
 }
 
-func (f *ProtoField) SetEntityAt(e *Entity, n int, value *Reference) error {
-	data := e.Entities[f.index]
-	if data == nil || len(data.Entities) <= n {
-		return IndexOutOfRangeErr
-	} else {
-		data.Entities[n] = (*Entity)(value)
-		return nil
-	}
+func (f *MessageFieldDef) SetReferenceAt(e *Entity, n int, value Reference) {
+	e.Entities[f.Offset].Entities[n] = value.Entity
 }
 
-func (f *ProtoField) Reserve(e *Entity, count int) int {
-	data := e.Entities[f.index]
+// Reserve reserves a room for specified number of items for the repeated
+// message field and returns the number of items that have been allocated in the
+// collection before a place for the new ones has been reserved.
+func (f *MessageFieldDef) Reserve(e *Entity, count int) int {
+	data := e.Entities[f.Offset]
 	if data == nil {
 		data = new(Entity)
-		e.Entities[f.index] = data
+		e.Entities[f.Offset] = data
 	}
-	if f.DataType.isRef() {
+	if f.DataType.IsRefType() {
 		n := len(data.Entities)
 		data.Entities = append(data.Entities, make([]*Entity, count)...)
 		return n
 	} else {
-		sz := f.DataType.getSize()
+		sz := f.DataType.GetWidthInBytes()
 		n := len(data.Data) / sz
 		data.Data = append(data.Data, make([]byte, count*sz)...)
 		return n
 	}
 }
 
-func (f *ProtoField) Len(e *Entity) int {
-	data := e.Entities[f.index]
+func (f *MessageFieldDef) Len(e *Entity) int {
+	data := e.Entities[f.Offset]
 	if data == nil {
 		return 0
 	}
-	if f.DataType.isRef() {
+	if f.DataType.IsRefType() {
 		return len(data.Entities)
 	} else {
-		return len(data.Data) / f.DataType.getSize()
+		return len(data.Data) / f.DataType.GetWidthInBytes()
 	}
 }
 
-func (f *ProtoField) getData(e *Entity, off int) (Primitive, error) {
-	sz := f.DataType.getSize()
-	if off+sz > len(e.Data) {
-		return 0, IndexOutOfRangeErr
-	}
+func (f *MessageFieldDef) getPrimitive(e *Entity, off int) Primitive {
+	sz := f.DataType.GetWidthInBytes()
 	var value uint64
 	switch sz {
-	case bytes8:
+	case TypeWidth8:
 		value = uint64(e.Data[off])
-	case bytes32:
-		v32 := memutil.GetByteOrder().Uint32(e.Data[off : off+4])
+	case TypeWidth32:
+		v32 := memory.GetByteOrder().Uint32(e.Data[off : off+4])
 		value = uint64(v32)
-	case bytes64:
-		value = memutil.GetByteOrder().Uint64(e.Data[off : off+8])
+	case TypeWidth64:
+		value = memory.GetByteOrder().Uint64(e.Data[off : off+8])
 	default:
 		panic(fmt.Sprintf("unexpected size of the field: %v", sz))
 	}
-	return Primitive(value), nil
+	return Primitive(value)
 }
 
-func (f *ProtoField) setData(e *Entity, off int, value Primitive) error {
-	sz := f.DataType.getSize()
-	if off+sz > len(e.Data) {
-		return IndexOutOfRangeErr
-	}
+func (f *MessageFieldDef) setPrimitive(e *Entity, off int, value Primitive) {
+	sz := f.DataType.GetWidthInBytes()
 	switch sz {
-	case bytes8:
+	case TypeWidth8:
 		e.Data[off] = byte(value)
-	case bytes32:
-		memutil.GetByteOrder().PutUint32(e.Data[off:off+4], uint32(value))
-	case bytes64:
-		memutil.GetByteOrder().PutUint64(e.Data[off:off+8], uint64(value))
+	case TypeWidth32:
+		memory.GetByteOrder().PutUint32(e.Data[off:off+4], uint32(value))
+	case TypeWidth64:
+		memory.GetByteOrder().PutUint64(e.Data[off:off+8], uint64(value))
 	default:
 		panic(fmt.Sprintf("unexpected size of the field: %v", sz))
 	}
-	return nil
 }

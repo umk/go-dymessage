@@ -1,19 +1,20 @@
-package dymessage
+package json
 
 import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	. "github.com/umk/go-dymessage/internal/testing"
 )
 
 func TestJsonEncodeDecode(t *testing.T) {
-	def, entity := arrangeEncodeDecode()
+	def, entity := ArrangeEncodeDecode()
 
 	// Checking whether the message can be read right after is has been composed.
-	assertEncodeDecode(t, def, entity)
+	AssertEncodeDecode(t, def, entity)
 
 	// Converting message to JSON and back.
-	enc := &JsonEncoder{Relaxed: false, Ident: true}
+	enc := &Encoder{IgnoreUnknown: false, Ident: true}
 	data, err := enc.Encode(entity, def)
 	require.NoError(t, err)
 
@@ -21,5 +22,5 @@ func TestJsonEncodeDecode(t *testing.T) {
 	require.NoError(t, err)
 
 	// Checking values of the converted message.
-	assertEncodeDecode(t, def, entity2)
+	AssertEncodeDecode(t, def, entity2)
 }
