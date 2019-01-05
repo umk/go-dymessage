@@ -1,7 +1,9 @@
 package protobuf
 
 import (
+	"errors"
 	"fmt"
+
 	. "github.com/umk/go-dymessage"
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
@@ -121,7 +123,7 @@ func (ec *Encoder) encodeRefs(e *Entity, pd *MessageDef, f *MessageFieldDef) err
 	}
 	for _, item := range data.Entities {
 		if item == nil {
-			return ErrRepeatedNull
+			return errors.New("repeated field has null item")
 		}
 		if err := ec.encodeRef(item, pd, f); err != nil {
 			return err

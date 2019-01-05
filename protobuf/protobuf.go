@@ -1,7 +1,6 @@
 package protobuf
 
 import (
-	"errors"
 	"github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
@@ -16,8 +15,6 @@ type Encoder struct {
 	IgnoreUnknown bool
 	buf           impl.Buffer
 }
-
-var ErrRepeatedNull = errors.New("repeated field has null item")
 
 func (ec *Encoder) clone() *Encoder {
 	return &Encoder{

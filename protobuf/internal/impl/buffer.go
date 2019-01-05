@@ -37,11 +37,6 @@ package impl
 type Buffer struct {
 	buf   []byte // encode/decode byte stream
 	index int    // read point
-
-	// pools of basic types to amortize allocation.
-	bools   []bool
-	uint32s []uint32
-	uint64s []uint64
 }
 
 // NewBuffer allocates a new Buffer and initializes its internal data to
