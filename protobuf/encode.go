@@ -6,6 +6,9 @@ import (
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
+// Encode encodes the data from the dynamic entity into a protocol buffers
+// format. If the entity type doesn't correspond the data type of the message
+// definition, the method will panic.
 func (ec *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
 	defer ec.buf.Reset()
 	for _, f := range pd.Fields {

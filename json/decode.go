@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+	"github.com/umk/go-dymessage/internal/helpers"
 	"reflect"
 	"strconv"
 
@@ -13,11 +14,21 @@ import (
 	. "github.com/umk/go-dymessage"
 )
 
+// Decode transforms the JSON representation of the message to a dynamic entity
+// against the provided message definition.
 func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
 	return s.DecodeInto(b, pd, pd.NewEntity())
 }
 
+// DecodeInto transforms the JSON representation of the message to specified
+// dynamic entity against the provided message definition. The returned entity
+// is the one that has been provided as an input parameter e, but now populated
+// with the data.
+//
+// If the entity type doesn't correspond the data type of the message
+// definition, the method will panic.
 func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
+	helpers.DataTypesMustMatch(e, pd)
 	var data map[string]interface{}
 	decoder := json.NewDecoder(bytes.NewReader(b))
 	decoder.UseNumber()

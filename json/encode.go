@@ -6,9 +6,14 @@ import (
 	"fmt"
 
 	. "github.com/umk/go-dymessage"
+	"github.com/umk/go-dymessage/internal/helpers"
 )
 
+// Encode transforms the data from the dynamic entity to a buffer, containing
+// the JSON. If the entity type doesn't correspond the data type of the message
+// definition, the method will panic.
 func (s *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
+	helpers.DataTypesMustMatch(e, pd)
 	fields := s.getJsonFields(e, pd)
 	if s.Ident {
 		return json.MarshalIndent(fields, "", "\t")

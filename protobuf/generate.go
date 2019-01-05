@@ -13,6 +13,8 @@ import (
 )
 
 type (
+	// Provides methods to locate where the exported protocol definition
+	// files will be located. See the ExportProto function for details.
 	ExportLocator interface {
 		// CreateWriter should create a writer for definitions of the message, found
 		// at specified namespace in the repository. After the writer has been
@@ -90,6 +92,10 @@ func (f *FileSystemLocator) GetImport(ns string) string {
 // -----------------------------------------------------------------------------
 // Export
 
+// ExportProto transforms the whole registry into the .proto files, so the
+// clients of the application, which use the dynamic messages library, could
+// generate their own sources on their favorite languages and then communicate
+// with the application.
 func ExportProto(r *Registry, loc ExportLocator) error {
 	files := make(map[string]map[string]*MessageDef)
 	for _, def := range r.Defs {

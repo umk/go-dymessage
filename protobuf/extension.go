@@ -30,8 +30,10 @@ func init() {
 // -----------------------------------------------------------------------------
 // Extensions
 
-// WithZigZag extends the message field definition to indicate that the value
-// must be represented by a ZigZag encoding.
+// WithZigZag produces a function to extend the message field definition,
+// indicating that the value must be represented by a ZigZag encoding.
+//
+// Use this function with the ExtendField method of MessageDefBuilder.
 func WithZigZag() func(*dymessage.MessageFieldDef) {
 	return withIntegerKind(
 		ikZigZag,
@@ -39,8 +41,10 @@ func WithZigZag() func(*dymessage.MessageFieldDef) {
 		dymessage.DtInt64)
 }
 
-// WithVarint extends the message field definition to indicate that the value
-// must be represented by a ZigZag encoding.
+// WithVarint produces a function to extend the message field definition,
+// indicating that the value must be represented by a ZigZag encoding.
+//
+// Use this function with the ExtendField method of MessageDefBuilder.
 func WithVarint() func(*dymessage.MessageFieldDef) {
 	return withIntegerKind(
 		ikVarint,

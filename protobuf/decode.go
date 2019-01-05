@@ -3,16 +3,27 @@ package protobuf
 import (
 	"errors"
 	"fmt"
+	"github.com/umk/go-dymessage/internal/helpers"
 
 	. "github.com/umk/go-dymessage"
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
+// Decode transforms the protocol buffers representation of the message to a
+// dynamic entity against the provided message definition.
 func (ec *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
 	return ec.DecodeInto(b, pd, pd.NewEntity())
 }
 
+// DecodeInto transforms the protocol buffers representation of the message to
+// specified dynamic entity against the provided message definition. The
+// returned entity is the one that has been provided as an input parameter e,
+// but now populated with the data.
+//
+// If the entity type doesn't correspond the data type of the message
+// definition, the method will panic.
 func (ec *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
+	helpers.DataTypesMustMatch(e, pd)
 	ec.buf.SetBuf(b)
 	defer ec.buf.Reset()
 	for !ec.buf.Eob() {

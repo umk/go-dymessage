@@ -1,4 +1,4 @@
-package helpers
+package memory
 
 import (
 	"encoding/binary"
