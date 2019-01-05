@@ -16,6 +16,9 @@ cover:
 	go test -coverprofile $(CURDIR)/$(COVERAGE_FILE) ./...
 	go tool cover -html=$(CURDIR)/$(COVERAGE_FILE)
 
+bench:
+	go test -bench=. ./...
+
 $(PROTO_GO_FILES): $(PROTO_FILES)
 	protoc --proto_path=$(dir $<) --go_out=$(dir $<) $^
 
@@ -28,4 +31,4 @@ format:
 clean:
 	find $(CURDIR) -name '*.pb.go' -type f -exec rm '{}' \;
 
-.PHONY: gen test testfix cover format clean
+.PHONY: gen test testfix cover bench format clean

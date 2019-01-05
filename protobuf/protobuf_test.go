@@ -40,7 +40,7 @@ func TestEncodeDecodeZigzag(t *testing.T) {
 	testEncodeDecode(
 		t,
 		new(testdata.TestMessageZigzag),
-		func (def *dymessage.MessageDef) {
+		func(def *dymessage.MessageDef) {
 			// Regular fields
 			WithVarint()(def.Fields[TagRegInt32])
 			WithVarint()(def.Fields[TagRegInt64])
