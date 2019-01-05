@@ -54,7 +54,7 @@ func BenchmarkTestProtoEncodeRegular(b *testing.B) {
 	})
 }
 
-func BenchmarkTestProtoDencodeRegular(b *testing.B) {
+func BenchmarkTestProtoDecodeRegular(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 	enc := Encoder{}
 	data, err := enc.Encode(entity, def)
