@@ -13,11 +13,41 @@ import (
 type Encoder struct {
 	// Indicates whether the unknown fields must be silently skipped.
 	IgnoreUnknown bool
-	buf           impl.Buffer
+	// The buffer currently being read or written by Encoder.
+	buf *impl.Buffer
+	// A collection of buffers to reuse for encoding and decoding of the
+	// nested entities.
+	bufs []*impl.Buffer
 }
 
-func (ec *Encoder) clone() *Encoder {
-	return &Encoder{
-		IgnoreUnknown: ec.IgnoreUnknown,
+// borrowBuf gets a new buffer from the bufs collection or creates a new one if
+// collection is empty. Then the buffer is assigned as current one. The returned
+// value is a function to be used to return the buffer back to bufs collection
+// and restore the previous buffer.
+func (ec *Encoder) borrowBuf() func() {
+	n := len(ec.bufs)
+	var buf *impl.Buffer
+	if n > 0 {
+		buf, ec.bufs = ec.bufs[n-1], ec.bufs[:n-1]
+	} else {
+		buf = &impl.Buffer{}
+	}
+	prev := ec.buf
+	ec.buf = buf
+	return func() {
+		ec.buf.Reset()
+		ec.bufs = append(ec.bufs, buf)
+		ec.buf = prev
+	}
+}
+
+// pushBuf creates a new buffer and substitutes the one currently being read or
+// written by this instance of Encoder. The returned value is a function to be
+// used to restore the previous buffer.
+func (ec *Encoder) pushBuf(buf []byte) func() {
+	prev := ec.buf
+	ec.buf = impl.NewBuffer(buf)
+	return func() {
+		ec.buf = prev
 	}
 }

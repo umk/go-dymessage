@@ -24,8 +24,7 @@ func (ec *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
 // definition, the method will panic.
 func (ec *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
 	helpers.DataTypesMustMatch(e, pd)
-	ec.buf.SetBuf(b)
-	defer ec.buf.Reset()
+	defer ec.pushBuf(b)()
 	for !ec.buf.Eob() {
 		t, err := ec.buf.DecodeVarint()
 		if err != nil {
@@ -66,9 +65,7 @@ func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 	var entity *Entity
 	if (f.DataType & DtEntity) != 0 {
 		def := pd.Registry.GetMessageDef(f.DataType)
-		another := ec.clone()
-		entity, err = another.Decode(value, def)
-		if err != nil {
+		if entity, err = ec.Decode(value, def); err != nil {
 			return err
 		}
 	} else {
@@ -132,21 +129,20 @@ func (ec *Encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 }
 
 func (ec *Encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte) (err error) {
-	another := ec.clone()
-	another.buf.SetBuf(value)
+	defer ec.pushBuf(value)()
 	extension, ok := tryGetExtension(f)
-	for !another.buf.Eob() {
+	for !ec.buf.Eob() {
 		var i uint64
 		if ok && extension.integerKind != ikDefault {
-			i, err = another.decodeValueByKind(f, extension.integerKind)
+			i, err = ec.decodeValueByKind(f, extension.integerKind)
 		} else {
-			i, err = another.decodeValueDefault(f)
+			i, err = ec.decodeValueDefault(f)
 		}
 		if err != nil {
 			return
 		}
-		n := f.Reserve(e, 1)
-		f.SetPrimitiveAt(e, n, Primitive(i))
+		prev := f.Reserve(e, 1)
+		f.SetPrimitiveAt(e, prev, Primitive(i))
 	}
 	return
 }

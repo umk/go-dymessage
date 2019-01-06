@@ -12,7 +12,7 @@ import (
 // format. If the entity type doesn't correspond the data type of the message
 // definition, the method will panic.
 func (ec *Encoder) Encode(e *Entity, pd *MessageDef) ([]byte, error) {
-	defer ec.buf.Reset()
+	defer ec.borrowBuf()()
 	for _, f := range pd.Fields {
 		var err error
 		if f.Repeated {
@@ -105,8 +105,7 @@ func (ec *Encoder) encodeRef(
 		bytes = e.Data
 	} else {
 		def := pd.Registry.GetMessageDef(f.DataType)
-		another := ec.clone()
-		if bytes, err = another.Encode(e, def); err != nil {
+		if bytes, err = ec.Encode(e, def); err != nil {
 			return
 		}
 	}
