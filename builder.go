@@ -2,6 +2,7 @@ package dymessage
 
 import (
 	"fmt"
+	"sort"
 )
 
 type (
@@ -105,6 +106,12 @@ func (mb *MessageDefBuilder) Build() *MessageDef {
 	if mb.registry.Defs[mb.index] != nil {
 		panic(fmt.Sprintf("message definition at %v has already been built", mb.index))
 	}
+	// Sorting the fields in order to optimize serialization and
+	// deserialization of the messages.
+	fields := mb.message.Fields
+	sort.Slice(fields, func(i, j int) bool {
+		return fields[i].Tag < fields[j].Tag
+	})
 	mb.registry.Defs[mb.index] = mb.message
 	return mb.message
 }
