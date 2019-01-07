@@ -3,8 +3,8 @@ package protobuf
 import (
 	"testing"
 
+	"github.com/golang/protobuf/proto"
 	"github.com/stretchr/testify/assert"
-	"github.com/umk/protobuf/proto"
 
 	. "github.com/umk/go-dymessage/internal/testing"
 	"github.com/umk/go-dymessage/protobuf/internal/testdata"
