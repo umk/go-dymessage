@@ -68,7 +68,6 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 		}
 	})
 
-
 	// Neither the entity structures, nor the internal structures of encoder
 	// are shared between the different calls.
 	b.Run("decode regular new entity and encoder", func(b *testing.B) {
