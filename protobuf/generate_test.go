@@ -67,7 +67,7 @@ func TestExport(t *testing.T) {
 		Build()
 
 	reg, loc := rb.Build(), &testLocator{}
-	err := ExportProto(reg, loc)
+	err := ExportToProto(reg, loc)
 
 	require.NoError(t, err)
 	require.Len(t, loc.bufs, 2)

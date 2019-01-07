@@ -44,7 +44,7 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 
 	b.Run("decode regular", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := enc.DecodeInto(data, def, message)
+			_, err := enc.Decode(data, def, message)
 			assert.NoError(b, err)
 		}
 	})
@@ -53,7 +53,7 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 	// entity.
 	b.Run("decode regular new entity", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := enc.DecodeInto(data, def, def.NewEntity())
+			_, err := enc.Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})
@@ -63,7 +63,7 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 	b.Run("decode regular new encoder", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			enc := Encoder{}
-			_, err := enc.DecodeInto(data, def, message)
+			_, err := enc.Decode(data, def, message)
 			assert.NoError(b, err)
 		}
 	})
@@ -73,7 +73,7 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 	b.Run("decode regular new entity and encoder", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			enc := Encoder{}
-			_, err := enc.DecodeInto(data, def, def.NewEntity())
+			_, err := enc.Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})
@@ -93,7 +93,7 @@ func BenchmarkTestDecodeRegularShuffled(b *testing.B) {
 	// the regular decode.
 	b.Run("decode regular shuffled", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := enc.DecodeInto(data, def, message)
+			_, err := enc.Decode(data, def, message)
 			assert.NoError(b, err)
 		}
 	})
@@ -102,7 +102,7 @@ func BenchmarkTestDecodeRegularShuffled(b *testing.B) {
 	b.Run("decode regular worst case", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			enc := Encoder{}
-			_, err := enc.DecodeInto(data, def, def.NewEntity())
+			_, err := enc.Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})

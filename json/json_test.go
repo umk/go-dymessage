@@ -18,7 +18,7 @@ func TestJsonEncodeDecode(t *testing.T) {
 	data, err := enc.Encode(entity, def)
 	require.NoError(t, err)
 
-	entity2, err := enc.Decode(data, def)
+	entity2, err := enc.DecodeNew(data, def)
 	require.NoError(t, err)
 
 	// Checking values of the converted message.

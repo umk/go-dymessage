@@ -9,20 +9,20 @@ import (
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
-// Decode transforms the protocol buffers representation of the message to a
+// DecodeNew transforms the protocol buffers representation of the message to a
 // dynamic entity against the provided message definition.
-func (ec *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
-	return ec.DecodeInto(b, pd, pd.NewEntity())
+func (ec *Encoder) DecodeNew(b []byte, pd *MessageDef) (*Entity, error) {
+	return ec.Decode(b, pd, pd.NewEntity())
 }
 
-// DecodeInto transforms the protocol buffers representation of the message to
+// Decode transforms the protocol buffers representation of the message to
 // specified dynamic entity against the provided message definition. The
 // returned entity is the one that has been provided as an input parameter e,
 // but now populated with the data.
 //
 // If the entity type doesn't correspond the data type of the message
 // definition, the method will panic.
-func (ec *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
+func (ec *Encoder) Decode(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
 	helpers.DataTypesMustMatch(e, pd)
 	defer ec.pushBuf(b)()
 	// If entity data is not empty, resetting it to default just in case if
@@ -128,7 +128,7 @@ func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 		if entity == nil {
 			entity = def.NewEntity()
 		}
-		if entity, err = ec.DecodeInto(value, def, entity); err != nil {
+		if entity, err = ec.Decode(value, def, entity); err != nil {
 			return err
 		}
 	} else {
