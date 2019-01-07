@@ -3,6 +3,7 @@ package protobuf
 import (
 	"github.com/umk/go-dymessage"
 	"github.com/umk/go-dymessage/protobuf/internal/testdata"
+	"math/rand"
 	"testing"
 
 	"github.com/golang/protobuf/proto"
@@ -16,6 +17,19 @@ func TestEncodeDecodeRegular(t *testing.T) {
 		t,
 		new(testdata.TestMessageRegular),
 		func(*dymessage.MessageDef) {})
+}
+
+func TestEncodeDecodeRegularShuffled(t *testing.T) {
+	testEncodeDecode(
+		t,
+		new(testdata.TestMessageRegular),
+		func(def *dymessage.MessageDef) {
+			rand.Shuffle(
+				len(def.Fields),
+				func(i, j int) {
+					def.Fields[i], def.Fields[j] = def.Fields[j], def.Fields[i]
+				})
+		})
 }
 
 func TestEncodeDecodeVarint(t *testing.T) {

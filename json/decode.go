@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/umk/go-dymessage/internal/helpers"
 	"reflect"
 	"strconv"
 
@@ -12,6 +11,7 @@ import (
 	"encoding/json"
 
 	. "github.com/umk/go-dymessage"
+	"github.com/umk/go-dymessage/internal/helpers"
 )
 
 // Decode transforms the JSON representation of the message to a dynamic entity
