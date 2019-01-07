@@ -27,9 +27,11 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 	data, err := enc.Encode(entity, def)
 	assert.NoError(b, err)
 
+	message := def.NewEntity()
+
 	b.Run("decode regular", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := enc.Decode(data, def)
+			_, err := enc.DecodeInto(data, def, message)
 			assert.NoError(b, err)
 		}
 	})

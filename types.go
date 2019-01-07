@@ -4,7 +4,8 @@ package dymessage
 type DataType uint32
 
 const (
-	DtInt32 DataType = iota + 1
+	DtNone DataType = iota
+	DtInt32
 	DtInt64
 	DtUint32
 	DtUint64

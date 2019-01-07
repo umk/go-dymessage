@@ -36,7 +36,7 @@ func (ec *Encoder) borrowBuf() func() {
 	ec.buf = buf
 	return func() {
 		ec.buf.Reset()
-		ec.bufs = append(ec.bufs, buf)
+		ec.bufs = append(ec.bufs, ec.buf)
 		ec.buf = prev
 	}
 }
@@ -44,10 +44,21 @@ func (ec *Encoder) borrowBuf() func() {
 // pushBuf creates a new buffer and substitutes the one currently being read or
 // written by this instance of Encoder. The returned value is a function to be
 // used to restore the previous buffer.
-func (ec *Encoder) pushBuf(buf []byte) func() {
+func (ec *Encoder) pushBuf(data []byte) func() {
+	n := len(ec.bufs)
+	var buf *impl.Buffer
+	if n > 0 {
+		buf, ec.bufs = ec.bufs[n-1], ec.bufs[:n-1]
+	} else {
+		buf = &impl.Buffer{}
+	}
 	prev := ec.buf
-	ec.buf = impl.NewBuffer(buf)
+	ec.buf = buf
+	bufData := ec.buf.Bytes()
+	ec.buf.SetBuf(data)
 	return func() {
+		ec.buf.SetBuf(bufData)
+		ec.bufs = append(ec.bufs, ec.buf)
 		ec.buf = prev
 	}
 }

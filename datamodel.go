@@ -45,6 +45,15 @@ func GetDefaultPrimitive() Primitive { return Primitive(0) }
 func GetDefaultReference() Reference { return Reference{} }
 
 // -----------------------------------------------------------------------------
+// Entity implementation
+
+func (e *Entity) Reset() {
+	if e.DataType == DtNone {
+		e.Data, e.Entities = e.Data[:0], e.Entities[:0]
+	}
+}
+
+// -----------------------------------------------------------------------------
 // Primitive value conversions
 
 func FromInt32(value int32) Primitive   { return Primitive(value) }
