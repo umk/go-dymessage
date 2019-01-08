@@ -9,20 +9,7 @@ import (
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
-// DecodeNew transforms the protocol buffers representation of the message to a
-// dynamic entity against the provided message definition.
-func (ec *Encoder) DecodeNew(b []byte, pd *MessageDef) (*Entity, error) {
-	return ec.Decode(b, pd, pd.NewEntity())
-}
-
-// Decode transforms the protocol buffers representation of the message to
-// specified dynamic entity against the provided message definition. The
-// returned entity is the one that has been provided as an input parameter e,
-// but now populated with the data.
-//
-// If the entity type doesn't correspond the data type of the message
-// definition, the method will panic.
-func (ec *Encoder) Decode(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
+func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) error {
 	helpers.DataTypesMustMatch(e, pd)
 	defer ec.pushBuf(b)()
 	// If entity data is not empty, resetting it to default just in case if
@@ -33,10 +20,10 @@ func (ec *Encoder) Decode(b []byte, pd *MessageDef, e *Entity) (*Entity, error) 
 		}
 	}
 	fseq, fields := 0, pd.Fields
-	for !ec.buf.Eob() {
-		t, err := ec.buf.DecodeVarint()
+	for !ec.cur.Eob() {
+		t, err := ec.cur.DecodeVarint()
 		if err != nil {
-			return nil, err
+			return err
 		}
 		wire, tag := t&7, t>>3
 		f, ok := (*MessageFieldDef)(nil), false
@@ -65,7 +52,7 @@ func (ec *Encoder) Decode(b []byte, pd *MessageDef, e *Entity) (*Entity, error) 
 		f, ok = pd.TryGetField(tag)
 		if !ok {
 			if err = ec.skipValue(wire); err != nil {
-				return nil, err
+				return err
 			}
 			continue
 		}
@@ -76,14 +63,14 @@ func (ec *Encoder) Decode(b []byte, pd *MessageDef, e *Entity) (*Entity, error) 
 			err = ec.decodeValue(e, f)
 		}
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
-	return e, nil
+	return nil
 }
 
-func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error {
-	value, err := ec.buf.DecodeRawBytes(false)
+func (ec *encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error {
+	value, err := ec.cur.DecodeRawBytes(false)
 	if err != nil {
 		return err
 	}
@@ -124,7 +111,7 @@ func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 		if entity == nil {
 			entity = def.NewEntity()
 		}
-		if entity, err = ec.Decode(value, def, entity); err != nil {
+		if err = ec.decode(value, def, entity); err != nil {
 			return err
 		}
 	} else {
@@ -155,16 +142,16 @@ func (ec *Encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 	return nil
 }
 
-func (ec *Encoder) skipValue(wire uint64) (err error) {
+func (ec *encoder) skipValue(wire uint64) (err error) {
 	switch wire {
 	case WireVarint:
-		_, err = ec.buf.DecodeVarint()
+		_, err = ec.cur.DecodeVarint()
 	case WireFixed32:
-		_, err = ec.buf.DecodeFixed32()
+		_, err = ec.cur.DecodeFixed32()
 	case WireFixed64:
-		_, err = ec.buf.DecodeFixed64()
+		_, err = ec.cur.DecodeFixed64()
 	case WireBytes:
-		_, err = ec.buf.DecodeRawBytes(false)
+		_, err = ec.cur.DecodeRawBytes(false)
 	default:
 		message := fmt.Sprintf("The wire format %d is not supported.", wire)
 		err = errors.New(message)
@@ -172,7 +159,7 @@ func (ec *Encoder) skipValue(wire uint64) (err error) {
 	return
 }
 
-func (ec *Encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
+func (ec *encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 	var value uint64
 	extension, ok := tryGetExtension(f)
 	if ok && extension.integerKind != ikDefault {
@@ -196,10 +183,10 @@ func (ec *Encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 	return err
 }
 
-func (ec *Encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte) (err error) {
+func (ec *encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte) (err error) {
 	defer ec.pushBuf(value)()
 	extension, ok := tryGetExtension(f)
-	for !ec.buf.Eob() {
+	for !ec.cur.Eob() {
 		var i uint64
 		if ok && extension.integerKind != ikDefault {
 			i, err = ec.decodeValueByKind(f, extension.integerKind)
@@ -215,30 +202,30 @@ func (ec *Encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte
 	return
 }
 
-func (ec *Encoder) decodeValueDefault(f *MessageFieldDef) (value uint64, err error) {
+func (ec *encoder) decodeValueDefault(f *MessageFieldDef) (value uint64, err error) {
 	switch f.DataType {
 	case DtInt32, DtUint32, DtFloat32:
-		value, err = ec.buf.DecodeFixed32()
+		value, err = ec.cur.DecodeFixed32()
 	case DtInt64, DtUint64, DtFloat64:
-		value, err = ec.buf.DecodeFixed64()
+		value, err = ec.cur.DecodeFixed64()
 	case DtBool:
-		value, err = ec.buf.DecodeVarint()
+		value, err = ec.cur.DecodeVarint()
 	default:
 		panic(fmt.Sprintf("unsupported decoding data type %d", f.DataType))
 	}
 	return
 }
 
-func (ec *Encoder) decodeValueByKind(f *MessageFieldDef, ik integerKind) (uint64, error) {
+func (ec *encoder) decodeValueByKind(f *MessageFieldDef, ik integerKind) (uint64, error) {
 	switch ik {
 	case ikVarint:
-		return ec.buf.DecodeVarint()
+		return ec.cur.DecodeVarint()
 	case ikZigZag:
 		switch f.DataType {
 		case DtInt32:
-			return ec.buf.DecodeZigzag32()
+			return ec.cur.DecodeZigzag32()
 		case DtInt64:
-			return ec.buf.DecodeZigzag64()
+			return ec.cur.DecodeZigzag64()
 		default:
 			panic(fmt.Sprintf("ZigZag encoding is applied to invalid data type %d", f.DataType))
 		}
