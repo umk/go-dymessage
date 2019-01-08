@@ -72,7 +72,7 @@ func testEncodeDecode(t *testing.T, message proto.Message, setup func(*dymessage
 	AssertEncodeDecode(t, def, entity)
 
 	// Converting message to protobuf message and back.
-	enc := Encoder{IgnoreUnknown: false}
+	enc := Encoder{}
 	data, err := enc.Encode(entity, def)
 	require.NoError(t, err)
 

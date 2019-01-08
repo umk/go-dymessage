@@ -11,8 +11,6 @@ import (
 // are NOT thread-safe, but the instance of Encoder can be reused in a
 // non-concurrent manner.
 type Encoder struct {
-	// Indicates whether the unknown fields must be silently skipped.
-	IgnoreUnknown bool
 	// The buffer currently being read or written by Encoder.
 	buf *impl.Buffer
 	// A collection of buffers to reuse for encoding and decoding of the

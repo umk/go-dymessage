@@ -64,10 +64,6 @@ func (ec *Encoder) Decode(b []byte, pd *MessageDef, e *Entity) (*Entity, error) 
 		// through all the collection of entity fields.
 		f, ok = pd.TryGetField(tag)
 		if !ok {
-			if !ec.IgnoreUnknown {
-				message := fmt.Sprintf("Unexpected tag %d in the message", tag)
-				return nil, errors.New(message)
-			}
 			if err = ec.skipValue(wire); err != nil {
 				return nil, err
 			}
