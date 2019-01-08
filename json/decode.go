@@ -43,7 +43,6 @@ func (s *Encoder) Decode(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
 
 func (s *Encoder) setJsonFields(
 	e *Entity, pd *MessageDef, data map[string]interface{}) error {
-	count := 0
 	for _, f := range pd.Fields {
 		value, ok := data[f.Name]
 		if !ok {
@@ -53,7 +52,6 @@ func (s *Encoder) setJsonFields(
 			}
 			continue
 		}
-		count++
 		if value != nil {
 			var err error
 			if f.DataType.IsRefType() {
@@ -65,9 +63,6 @@ func (s *Encoder) setJsonFields(
 				return err
 			}
 		}
-	}
-	if s.RequireAll && count < len(data) {
-		return errors.New("some of the fields are missing in the message")
 	}
 	return nil
 }
