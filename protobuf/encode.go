@@ -83,15 +83,34 @@ func (ec *encoder) encodeValueByKind(
 	return
 }
 
-func (ec *encoder) encodeValues(e *Entity, f *MessageFieldDef) (err error) {
+func (ec *encoder) encodeValues(e *Entity, f *MessageFieldDef) error {
 	data := e.Entities[f.Offset]
-	if data != nil {
-		n := len(data.Data) / f.DataType.GetWidthInBytes()
-		for i := 0; i < n && err == nil; i++ {
-			value := f.GetPrimitiveAt(e, i)
-			err = ec.encodeValue(uint64(value), f)
+	if data != nil && len(data.Data) > 0 {
+		if err := ec.encodeTag(f.Tag, WireBytes); err != nil {
+			return err
+		}
+		buf, err := ec.encodeValuesPacked(e, f)
+		if err != nil {
+			return err
+		}
+		return ec.cur.EncodeRawBytes(buf)
+	}
+	return nil
+}
+
+func (ec *encoder) encodeValuesPacked(
+	e *Entity, f *MessageFieldDef) (buf []byte, err error) {
+	defer ec.borrowBuf()()
+	fn := ec.getValueEncoder(f)
+	n := f.Len(e)
+	for i := 0; i < n; i++ {
+		value := f.GetPrimitiveAt(e, i)
+		err = fn(uint64(value))
+		if err != nil {
+			return
 		}
 	}
+	buf = ec.cur.Bytes()
 	return
 }
 
@@ -110,6 +129,37 @@ func (ec *encoder) encodeRef(
 		err = ec.cur.EncodeRawBytes(bytes)
 	}
 	return
+}
+
+func (ec *encoder) getValueEncoder(f *MessageFieldDef) func(uint64) error {
+	extension, ok := tryGetExtension(f)
+	if ok && extension.integerKind != ikDefault {
+		switch extension.integerKind {
+		case ikVarint:
+			return ec.cur.EncodeVarint
+		case ikZigZag:
+			switch f.DataType {
+			case DtInt32:
+				return ec.cur.EncodeZigzag32
+			case DtInt64:
+				return ec.cur.EncodeZigzag64
+			default:
+				panic(fmt.Sprintf("ZigZag encoding is applied to invalid data type %d", f.DataType))
+			}
+		default:
+			panic(fmt.Sprintf("unsupported value of integer kind %d", extension.integerKind))
+		}
+	}
+	switch f.DataType {
+	case DtInt32, DtUint32, DtFloat32:
+		return ec.cur.EncodeFixed32
+	case DtInt64, DtUint64, DtFloat64:
+		return ec.cur.EncodeFixed64
+	case DtBool:
+		return ec.cur.EncodeVarint
+	default:
+		panic(fmt.Sprintf("unsupported encoding data type %d", f.DataType))
+	}
 }
 
 func (ec *encoder) encodeRefs(e *Entity, pd *MessageDef, f *MessageFieldDef) error {

@@ -186,18 +186,25 @@ func (ec *encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 func (ec *encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte) (err error) {
 	defer ec.pushBuf(value)()
 	extension, ok := tryGetExtension(f)
-	for !ec.cur.Eob() {
-		var i uint64
-		if ok && extension.integerKind != ikDefault {
+	var i uint64
+	if ok && extension.integerKind != ikDefault {
+		for !ec.cur.Eob() {
 			i, err = ec.decodeValueByKind(f, extension.integerKind)
-		} else {
+			if err != nil {
+				return
+			}
+			prev := f.Reserve(e, 1)
+			f.SetPrimitiveAt(e, prev, Primitive(i))
+		}
+	} else {
+		for !ec.cur.Eob() {
 			i, err = ec.decodeValueDefault(f)
+			if err != nil {
+				return
+			}
+			prev := f.Reserve(e, 1)
+			f.SetPrimitiveAt(e, prev, Primitive(i))
 		}
-		if err != nil {
-			return
-		}
-		prev := f.Reserve(e, 1)
-		f.SetPrimitiveAt(e, prev, Primitive(i))
 	}
 	return
 }
