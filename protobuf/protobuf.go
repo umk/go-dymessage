@@ -64,10 +64,9 @@ func putEncoder(ec *encoder) { encoders.Put(ec) }
 // Buffer manipulation
 
 // borrowBuf gets a new buffer from the bufs collection or creates a new one if
-// collection is empty. Then the buffer is assigned as current one. The returned
-// value is a function to be used to return the buffer back to bufs collection
-// and restore the previous buffer.
-func (ec *encoder) borrowBuf() func() {
+// collection is empty. Then the buffer is assigned as current one, and previous
+// one is returned.
+func (ec *encoder) borrowBuf() (prev *impl.Buffer) {
 	n := len(ec.bufs)
 	var buf *impl.Buffer
 	if n > 0 {
@@ -75,33 +74,38 @@ func (ec *encoder) borrowBuf() func() {
 	} else {
 		buf = &impl.Buffer{}
 	}
-	prev := ec.cur
+	prev = ec.cur
 	ec.cur = buf
-	return func() {
-		ec.cur.Reset()
-		ec.bufs = append(ec.bufs, ec.cur)
-		ec.cur = prev
-	}
+	return
 }
 
-// pushBuf gets a buffer from the bufs collection and substitutes the one
-// currently being read or written by this instance of encoder. The returned
-// value is a function to be used to restore the previous buffer.
-func (ec *encoder) pushBuf(data []byte) func() {
-	n := len(ec.bufs)
-	var buf *impl.Buffer
-	if n > 0 {
-		buf, ec.bufs = ec.bufs[n-1], ec.bufs[:n-1]
-	} else {
-		buf = &impl.Buffer{}
-	}
-	prev := ec.cur
-	ec.cur = buf
-	bufData := ec.cur.Bytes()
-	ec.cur.SetBuf(data)
-	return func() {
-		ec.cur.SetBuf(bufData)
-		ec.bufs = append(ec.bufs, ec.cur)
-		ec.cur = prev
-	}
+// returnBuf returns the borrowed buffer back to the bufs collection and puts
+// the provided buffer as the current one. The only parameter must be what did
+// the borrowBuf method return.
+func (ec *encoder) returnBuf(prev *impl.Buffer) {
+	ec.cur.Reset()
+	ec.bufs = append(ec.bufs, ec.cur)
+	ec.cur = prev
 }
+
+//// pushBuf gets a buffer from the bufs collection and substitutes the one
+//// currently being read or written by this instance of encoder. The returned
+//// value is a function to be used to restore the previous buffer.
+//func (ec *encoder) pushBuf(data []byte) func() {
+//	n := len(ec.bufs)
+//	var buf *impl.Buffer
+//	if n > 0 {
+//		buf, ec.bufs = ec.bufs[n-1], ec.bufs[:n-1]
+//	} else {
+//		buf = &impl.Buffer{}
+//	}
+//	prev := ec.cur
+//	ec.cur = buf
+//	bufData := ec.cur.Bytes()
+//	ec.cur.SetBuf(data)
+//	return func() {
+//		ec.cur.SetBuf(bufData)
+//		ec.bufs = append(ec.bufs, ec.cur)
+//		ec.cur = prev
+//	}
+//}

@@ -9,9 +9,11 @@ import (
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
-func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) error {
+func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) (err error) {
 	helpers.DataTypesMustMatch(e, pd)
-	defer ec.pushBuf(b)()
+	prevBuf := ec.borrowBuf()
+	prevBytes := ec.cur.Bytes()
+	ec.cur.SetBuf(b)
 	// If entity data is not empty, resetting it to default just in case if
 	// some of the fields are not populated.
 	if len(e.Data) > 0 {
@@ -21,9 +23,10 @@ func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) error {
 	}
 	fseq, fields := 0, pd.Fields
 	for !ec.cur.Eob() {
-		t, err := ec.cur.DecodeVarint()
+		var t uint64
+		t, err = ec.cur.DecodeVarint()
 		if err != nil {
-			return err
+			break
 		}
 		wire, tag := t&7, t>>3
 		f, ok := (*MessageFieldDef)(nil), false
@@ -52,7 +55,7 @@ func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) error {
 		f, ok = pd.TryGetField(tag)
 		if !ok {
 			if err = ec.skipValue(wire); err != nil {
-				return err
+				break
 			}
 			continue
 		}
@@ -63,10 +66,12 @@ func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) error {
 			err = ec.decodeValue(e, f)
 		}
 		if err != nil {
-			return err
+			break
 		}
 	}
-	return nil
+	ec.cur.SetBuf(prevBytes)
+	ec.returnBuf(prevBuf)
+	return
 }
 
 func (ec *encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) error {
@@ -184,17 +189,21 @@ func (ec *encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 }
 
 func (ec *encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte) (err error) {
-	defer ec.pushBuf(value)()
+	prevBuf := ec.borrowBuf()
+	prevBytes := ec.cur.Bytes()
+	ec.cur.SetBuf(value)
 	fn := ec.getValueDecoder(f)
 	var i uint64
 	for !ec.cur.Eob() {
 		i, err = fn()
 		if err != nil {
-			return
+			break
 		}
 		prev := f.Reserve(e, 1)
 		f.SetPrimitiveAt(e, prev, Primitive(i))
 	}
+	ec.cur.SetBuf(prevBytes)
+	ec.returnBuf(prevBuf)
 	return
 }
 

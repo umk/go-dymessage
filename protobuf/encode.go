@@ -8,10 +8,9 @@ import (
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
-func (ec *encoder) encode(e *Entity, pd *MessageDef) ([]byte, error) {
-	defer ec.borrowBuf()()
+func (ec *encoder) encode(e *Entity, pd *MessageDef) (result []byte, err error) {
+	prevBuf := ec.borrowBuf()
 	for _, f := range pd.Fields {
-		var err error
 		if f.Repeated {
 			if f.DataType.IsRefType() {
 				err = ec.encodeRefs(e, pd, f)
@@ -27,11 +26,12 @@ func (ec *encoder) encode(e *Entity, pd *MessageDef) ([]byte, error) {
 			value := f.GetPrimitive(e)
 			err = ec.encodeValue(uint64(value), f)
 		}
-		if err != nil {
-			return nil, err
-		}
 	}
-	return ec.cur.Bytes(), nil
+	if err == nil {
+		result = ec.cur.Bytes()
+	}
+	ec.returnBuf(prevBuf)
+	return
 }
 
 func (ec *encoder) encodeValue(value uint64, f *MessageFieldDef) (err error) {
@@ -100,17 +100,20 @@ func (ec *encoder) encodeValues(e *Entity, f *MessageFieldDef) error {
 
 func (ec *encoder) encodeValuesPacked(
 	e *Entity, f *MessageFieldDef) (buf []byte, err error) {
-	defer ec.borrowBuf()()
+	prevBuf := ec.borrowBuf()
 	fn := ec.getValueEncoder(f)
 	n := f.Len(e)
 	for i := 0; i < n; i++ {
 		value := f.GetPrimitiveAt(e, i)
 		err = fn(uint64(value))
 		if err != nil {
-			return
+			break
 		}
 	}
-	buf = ec.cur.Bytes()
+	if err == nil {
+		buf = ec.cur.Bytes()
+	}
+	ec.returnBuf(prevBuf)
 	return
 }
 
