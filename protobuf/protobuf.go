@@ -1,9 +1,9 @@
 package protobuf
 
 import (
-	"github.com/umk/go-dymessage"
 	"sync"
 
+	"github.com/umk/go-dymessage"
 	"github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
@@ -66,7 +66,7 @@ func putEncoder(ec *encoder) { encoders.Put(ec) }
 // borrowBuf gets a new buffer from the bufs collection or creates a new one if
 // collection is empty. Then the buffer is assigned as current one, and previous
 // one is returned.
-func (ec *encoder) borrowBuf() (prev *impl.Buffer) {
+func (ec *encoder) borrowBuf() (prevBuf *impl.Buffer) {
 	n := len(ec.bufs)
 	var buf *impl.Buffer
 	if n > 0 {
@@ -74,7 +74,7 @@ func (ec *encoder) borrowBuf() (prev *impl.Buffer) {
 	} else {
 		buf = &impl.Buffer{}
 	}
-	prev = ec.cur
+	prevBuf = ec.cur
 	ec.cur = buf
 	return
 }
@@ -82,30 +82,16 @@ func (ec *encoder) borrowBuf() (prev *impl.Buffer) {
 // returnBuf returns the borrowed buffer back to the bufs collection and puts
 // the provided buffer as the current one. The only parameter must be what did
 // the borrowBuf method return.
-func (ec *encoder) returnBuf(prev *impl.Buffer) {
+func (ec *encoder) returnBuf(prevBuf *impl.Buffer) {
 	ec.cur.Reset()
 	ec.bufs = append(ec.bufs, ec.cur)
-	ec.cur = prev
+	ec.cur = prevBuf
 }
 
-//// pushBuf gets a buffer from the bufs collection and substitutes the one
-//// currently being read or written by this instance of encoder. The returned
-//// value is a function to be used to restore the previous buffer.
-//func (ec *encoder) pushBuf(data []byte) func() {
-//	n := len(ec.bufs)
-//	var buf *impl.Buffer
-//	if n > 0 {
-//		buf, ec.bufs = ec.bufs[n-1], ec.bufs[:n-1]
-//	} else {
-//		buf = &impl.Buffer{}
-//	}
-//	prev := ec.cur
-//	ec.cur = buf
-//	bufData := ec.cur.Bytes()
-//	ec.cur.SetBuf(data)
-//	return func() {
-//		ec.cur.SetBuf(bufData)
-//		ec.bufs = append(ec.bufs, ec.cur)
-//		ec.cur = prev
-//	}
-//}
+// replaceBytes replaces the data in the current buffer with specified data and
+// returns the previous data.
+func (ec *encoder) replaceBytes(bytes []byte) (prev []byte) {
+	prev = ec.cur.Bytes()
+	ec.cur.SetBuf(bytes)
+	return
+}

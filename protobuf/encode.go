@@ -26,6 +26,9 @@ func (ec *encoder) encode(e *Entity, pd *MessageDef) (result []byte, err error) 
 			value := f.GetPrimitive(e)
 			err = ec.encodeValue(uint64(value), f)
 		}
+		if err != nil {
+			break
+		}
 	}
 	if err == nil {
 		result = ec.cur.Bytes()

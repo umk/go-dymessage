@@ -12,8 +12,7 @@ import (
 func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) (err error) {
 	helpers.DataTypesMustMatch(e, pd)
 	prevBuf := ec.borrowBuf()
-	prevBytes := ec.cur.Bytes()
-	ec.cur.SetBuf(b)
+	prevBytes := ec.replaceBytes(b)
 	// If entity data is not empty, resetting it to default just in case if
 	// some of the fields are not populated.
 	if len(e.Data) > 0 {
@@ -69,7 +68,7 @@ func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) (err error) {
 			break
 		}
 	}
-	ec.cur.SetBuf(prevBytes)
+	ec.replaceBytes(prevBytes)
 	ec.returnBuf(prevBuf)
 	return
 }
@@ -190,8 +189,7 @@ func (ec *encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 
 func (ec *encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte) (err error) {
 	prevBuf := ec.borrowBuf()
-	prevBytes := ec.cur.Bytes()
-	ec.cur.SetBuf(value)
+	prevBytes := ec.replaceBytes(value)
 	fn := ec.getValueDecoder(f)
 	var i uint64
 	for !ec.cur.Eob() {
@@ -202,7 +200,7 @@ func (ec *encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte
 		prev := f.Reserve(e, 1)
 		f.SetPrimitiveAt(e, prev, Primitive(i))
 	}
-	ec.cur.SetBuf(prevBytes)
+	ec.replaceBytes(prevBytes)
 	ec.returnBuf(prevBuf)
 	return
 }
