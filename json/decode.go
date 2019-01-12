@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/umk/go-dymessage/internal/helpers"
 	"reflect"
 	"strconv"
 
@@ -12,22 +11,23 @@ import (
 	"encoding/json"
 
 	. "github.com/umk/go-dymessage"
+	"github.com/umk/go-dymessage/internal/helpers"
 )
 
-// Decode transforms the JSON representation of the message to a dynamic entity
+// DecodeNew transforms the JSON representation of the message to a dynamic entity
 // against the provided message definition.
-func (s *Encoder) Decode(b []byte, pd *MessageDef) (*Entity, error) {
-	return s.DecodeInto(b, pd, pd.NewEntity())
+func (s *Encoder) DecodeNew(b []byte, pd *MessageDef) (*Entity, error) {
+	return s.Decode(b, pd, pd.NewEntity())
 }
 
-// DecodeInto transforms the JSON representation of the message to specified
+// Decode transforms the JSON representation of the message to specified
 // dynamic entity against the provided message definition. The returned entity
 // is the one that has been provided as an input parameter e, but now populated
 // with the data.
 //
 // If the entity type doesn't correspond the data type of the message
 // definition, the method will panic.
-func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
+func (s *Encoder) Decode(b []byte, pd *MessageDef, e *Entity) (*Entity, error) {
 	helpers.DataTypesMustMatch(e, pd)
 	var data map[string]interface{}
 	decoder := json.NewDecoder(bytes.NewReader(b))
@@ -43,7 +43,6 @@ func (s *Encoder) DecodeInto(b []byte, pd *MessageDef, e *Entity) (*Entity, erro
 
 func (s *Encoder) setJsonFields(
 	e *Entity, pd *MessageDef, data map[string]interface{}) error {
-	count := 0
 	for _, f := range pd.Fields {
 		value, ok := data[f.Name]
 		if !ok {
@@ -53,7 +52,6 @@ func (s *Encoder) setJsonFields(
 			}
 			continue
 		}
-		count++
 		if value != nil {
 			var err error
 			if f.DataType.IsRefType() {
@@ -65,9 +63,6 @@ func (s *Encoder) setJsonFields(
 				return err
 			}
 		}
-	}
-	if s.RequireAll && count < len(data) {
-		return errors.New("some of the fields are missing in the message")
 	}
 	return nil
 }
