@@ -185,28 +185,49 @@ func (ec *encoder) decodeValue(e *Entity, f *MessageFieldDef) (err error) {
 
 func (ec *encoder) decodeValuePacked(e *Entity, f *MessageFieldDef, value []byte) (err error) {
 	defer ec.pushBuf(value)()
-	extension, ok := tryGetExtension(f)
+	fn := ec.getValueDecoder(f)
 	var i uint64
-	if ok && extension.integerKind != ikDefault {
-		for !ec.cur.Eob() {
-			i, err = ec.decodeValueByKind(f, extension.integerKind)
-			if err != nil {
-				return
-			}
-			prev := f.Reserve(e, 1)
-			f.SetPrimitiveAt(e, prev, Primitive(i))
+	for !ec.cur.Eob() {
+		i, err = fn()
+		if err != nil {
+			return
 		}
-	} else {
-		for !ec.cur.Eob() {
-			i, err = ec.decodeValueDefault(f)
-			if err != nil {
-				return
-			}
-			prev := f.Reserve(e, 1)
-			f.SetPrimitiveAt(e, prev, Primitive(i))
-		}
+		prev := f.Reserve(e, 1)
+		f.SetPrimitiveAt(e, prev, Primitive(i))
 	}
 	return
+}
+
+func (ec *encoder) getValueDecoder(f *MessageFieldDef) func() (uint64, error) {
+	extension, ok := tryGetExtension(f)
+	if ok && extension.integerKind != ikDefault {
+		ik := extension.integerKind
+		switch ik {
+		case ikVarint:
+			return ec.cur.DecodeVarint
+		case ikZigZag:
+			switch f.DataType {
+			case DtInt32:
+				return ec.cur.DecodeZigzag32
+			case DtInt64:
+				return ec.cur.DecodeZigzag64
+			default:
+				panic(fmt.Sprintf("ZigZag encoding is applied to invalid data type %d", f.DataType))
+			}
+		default:
+			panic(fmt.Sprintf("unsupported value of integer kind %d", ik))
+		}
+	}
+	switch f.DataType {
+	case DtInt32, DtUint32, DtFloat32:
+		return ec.cur.DecodeFixed32
+	case DtInt64, DtUint64, DtFloat64:
+		return ec.cur.DecodeFixed64
+	case DtBool:
+		return ec.cur.DecodeVarint
+	default:
+		panic(fmt.Sprintf("unsupported decoding data type %d", f.DataType))
+	}
 }
 
 func (ec *encoder) decodeValueDefault(f *MessageFieldDef) (value uint64, err error) {
