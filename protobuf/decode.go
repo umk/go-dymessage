@@ -1,7 +1,6 @@
 package protobuf
 
 import (
-	"errors"
 	"fmt"
 
 	. "github.com/umk/go-dymessage"
@@ -68,6 +67,7 @@ func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) (err error) {
 			break
 		}
 	}
+	///////////////////////////////////////////////
 	ec.replaceBytes(prevBytes)
 	ec.returnBuf(prevBuf)
 	return
@@ -157,8 +157,7 @@ func (ec *encoder) skipValue(wire uint64) (err error) {
 	case WireBytes:
 		_, err = ec.cur.DecodeRawBytes(false)
 	default:
-		message := fmt.Sprintf("The wire format %d is not supported.", wire)
-		err = errors.New(message)
+		err = fmt.Errorf("dymessage: wire format %d is not supported", wire)
 	}
 	return
 }

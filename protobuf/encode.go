@@ -175,7 +175,7 @@ func (ec *encoder) encodeRefs(e *Entity, pd *MessageDef, f *MessageFieldDef) err
 	}
 	for _, item := range data.Entities {
 		if item == nil {
-			return errors.New("repeated field has null item")
+			return errors.New("dymessage: repeated field has null item")
 		}
 		if err := ec.encodeRef(item, pd, f); err != nil {
 			return err
