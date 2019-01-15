@@ -28,20 +28,20 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 	data, err := Encode(entity, def)
 	assert.NoError(b, err)
 
-	message := def.NewEntity()
-
+	// The decoder won't reuse the structures created for an existing
+	// entity.
 	b.Run("decode regular", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := Decode(data, def, message)
+			_, err := Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})
 
-	// The decoder won't reuse the structures created for an existing
-	// entity.
-	b.Run("decode regular new entity", func(b *testing.B) {
+	message := def.NewEntity()
+
+	b.Run("decode regular existing", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := Decode(data, def, def.NewEntity())
+			_, err := Decode(data, def, message)
 			assert.NoError(b, err)
 		}
 	})
@@ -54,13 +54,11 @@ func BenchmarkTestDecodeRegularShuffled(b *testing.B) {
 	data, err := Encode(entity, def)
 	assert.NoError(b, err)
 
-	message := def.NewEntity()
-
 	// The optimization to find the fields won't be applied in contrast to
 	// the regular decode.
 	b.Run("decode regular shuffled", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := Decode(data, def, message)
+			_, err := Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})
@@ -121,9 +119,8 @@ func BenchmarkTestDecodeParallel(b *testing.B) {
 	assert.NoError(b, err)
 
 	b.RunParallel(func(pb *testing.PB) {
-		message := def.NewEntity()
 		for pb.Next() {
-			_, err := Decode(data, def, message)
+			_, err := Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})
@@ -135,12 +132,11 @@ func BenchmarkTestEncodeDecodeParallel(b *testing.B) {
 	assert.NoError(b, err)
 
 	b.RunParallel(func(pb *testing.PB) {
-		message := def.NewEntity()
 		for pb.Next() {
 			var err error
 			_, err = Encode(entity, def)
 			assert.NoError(b, err)
-			_, err = Decode(data, def, message)
+			_, err = Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})

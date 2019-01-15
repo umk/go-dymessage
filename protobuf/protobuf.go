@@ -32,7 +32,7 @@ func init() {
 // definition, the method will panic.
 func Encode(e *dymessage.Entity, pd *dymessage.MessageDef) ([]byte, error) {
 	encoder := getEncoder()
-	buf, err := encoder.encode(e, pd)
+	buf, err := encoder.encode(e, pd, true)
 	putEncoder(encoder)
 	return buf, err
 }

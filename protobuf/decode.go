@@ -43,7 +43,7 @@ func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) (err error) {
 				f = fcur
 				goto FoundField
 			}
-			if (fcur.DataType & DtEntity) != 0 {
+			if fcur.DataType.IsEntity() {
 				// In case if the entity won't be provided at all.
 				e.Entities[fcur.Offset] = nil
 			}
@@ -67,7 +67,14 @@ func (ec *encoder) decode(b []byte, pd *MessageDef, e *Entity) (err error) {
 			break
 		}
 	}
-	///////////////////////////////////////////////
+	// Each of the following fields have not been specified in the input, so
+	// just cleaning its data.
+	for i := fseq; i < len(fields); i++ {
+		fcur := fields[i]
+		if fcur.DataType.IsEntity() {
+			e.Entities[fcur.Offset] = nil
+		}
+	}
 	ec.replaceBytes(prevBytes)
 	ec.returnBuf(prevBuf)
 	return
@@ -110,7 +117,7 @@ func (ec *encoder) decodeRef(e *Entity, pd *MessageDef, f *MessageFieldDef) erro
 		entity = e.Entities[f.Offset]
 	}
 	// Populating the nested entity with the data from the buffer.
-	if (f.DataType & DtEntity) != 0 {
+	if f.DataType.IsEntity() {
 		def := pd.Registry.GetMessageDef(f.DataType)
 		if entity == nil {
 			entity = def.NewEntity()

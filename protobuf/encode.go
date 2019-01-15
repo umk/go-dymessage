@@ -8,7 +8,12 @@ import (
 	. "github.com/umk/go-dymessage/protobuf/internal/impl"
 )
 
-func (ec *encoder) encode(e *Entity, pd *MessageDef) (result []byte, err error) {
+// encode encodes the specified entity into a protocol buffers against the
+// specified message definition. The ownedBuf parameter indicates whether
+// created buffer must be owned by the caller, or can be shared with further
+// callers.
+func (ec *encoder) encode(
+	e *Entity, pd *MessageDef, ownedBuf bool) (result []byte, err error) {
 	prevBuf := ec.borrowBuf()
 	for _, f := range pd.Fields {
 		if f.Repeated {
@@ -33,7 +38,9 @@ func (ec *encoder) encode(e *Entity, pd *MessageDef) (result []byte, err error) 
 	if err == nil {
 		result = ec.cur.Bytes()
 	}
-	ec.returnBuf(prevBuf)
+	if !ownedBuf {
+		ec.returnBuf(prevBuf)
+	}
 	return
 }
 
@@ -127,7 +134,7 @@ func (ec *encoder) encodeRef(
 		bytes = e.Data
 	} else {
 		def := pd.Registry.GetMessageDef(f.DataType)
-		if bytes, err = ec.encode(e, def); err != nil {
+		if bytes, err = ec.encode(e, def, false); err != nil {
 			return
 		}
 	}
