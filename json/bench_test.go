@@ -9,11 +9,10 @@ import (
 
 func BenchmarkTestEncodeRegular(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
-	enc := Encoder{}
 
 	b.Run("encode regular", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := enc.Encode(entity, def)
+			_, err := Encode(entity, def)
 			assert.NoError(b, err)
 		}
 	})
@@ -22,7 +21,7 @@ func BenchmarkTestEncodeRegular(b *testing.B) {
 func BenchmarkTestDecodeRegular(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 	enc := Encoder{}
-	data, err := enc.Encode(entity, def)
+	data, err := Encode(entity, def)
 	assert.NoError(b, err)
 
 	message := def.NewEntity()

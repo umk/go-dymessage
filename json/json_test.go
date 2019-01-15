@@ -15,7 +15,7 @@ func TestJsonEncodeDecode(t *testing.T) {
 
 	// Converting message to JSON and back.
 	enc := &Encoder{IgnoreUnknown: false, Ident: true}
-	data, err := enc.Encode(entity, def)
+	data, err := Encode(entity, def)
 	require.NoError(t, err)
 
 	entity2, err := enc.DecodeNew(data, def)
