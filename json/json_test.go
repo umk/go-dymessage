@@ -14,11 +14,12 @@ func TestJsonEncodeDecode(t *testing.T) {
 	AssertEncodeDecode(t, def, entity)
 
 	// Converting message to JSON and back.
-	enc := &Encoder{IgnoreUnknown: false, Ident: true}
 	data, err := Encode(entity, def)
 	require.NoError(t, err)
 
-	entity2, err := enc.DecodeNew(data, def)
+	t.Log(string(data))
+
+	entity2, err := Decode(data, def)
 	require.NoError(t, err)
 
 	// Checking values of the converted message.
