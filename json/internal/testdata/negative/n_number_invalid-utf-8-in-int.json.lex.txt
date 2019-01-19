@@ -1,0 +1,2 @@
+[0
+ERROR: dymessage: unexpected character '�'
