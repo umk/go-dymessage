@@ -13,7 +13,7 @@ import (
 
 type decoder struct {
 	//json *json.Decoder
-	lx lexer
+	lx       lexer
 	returned bool
 }
 
@@ -33,11 +33,11 @@ func (dc *decoder) token() *decoder {
 	return dc
 }
 
-func (dc *decoder) prob(t token) bool {
+func (dc *decoder) prob(t tokenKind) bool {
 	return dc.lx.reader.err == nil && dc.lx.tok.kind == t
 }
 
-func (dc *decoder) tok(t token) error {
+func (dc *decoder) tok(t tokenKind) error {
 	if dc.lx.tok.kind != t {
 		return fmt.Errorf("dymessage: expected %v, but found %v", t, dc.lx.tok.kind)
 	}
@@ -45,14 +45,14 @@ func (dc *decoder) tok(t token) error {
 }
 
 func (dc *decoder) null() bool {
-	return dc.lx.reader.err == nil && dc.lx.tok.kind == tokNull
+	return dc.lx.reader.err == nil && dc.lx.tok.kind == tkNull
 }
 
 func (dc *decoder) boolean() (bool, error) {
 	if dc.lx.reader.err != nil {
 		return false, dc.lx.reader.err
 	}
-	if dc.lx.tok.kind != tokBool {
+	if dc.lx.tok.kind != tkBool {
 		return false, errors.New("b")
 	}
 	return dc.lx.tok.bool, nil
@@ -62,7 +62,7 @@ func (dc *decoder) string() (string, error) {
 	if dc.lx.reader.err != nil {
 		return "", dc.lx.reader.err
 	}
-	if dc.lx.tok.kind != tokString {
+	if dc.lx.tok.kind != tkString {
 		return "", fmt.Errorf("dymessage: expected string, but found %v", dc.lx.tok.kind)
 	}
 	return dc.lx.tok.string, nil
@@ -72,7 +72,7 @@ func (dc *decoder) number() (string, error) {
 	if dc.lx.reader.err != nil {
 		return "", dc.lx.reader.err
 	}
-	if dc.lx.tok.kind != tokNumber {
+	if dc.lx.tok.kind != tkNumber {
 		return "", errors.New("d")
 	}
 	return dc.lx.tok.number, nil
@@ -98,16 +98,16 @@ func (dc *decoder) number() (string, error) {
 // definition, the method will panic.
 func Decode(b []byte, pd *MessageDef) (e *Entity, err error) {
 	buf := bytes.NewBuffer(b)
-	dc := decoder{ }
+	dc := decoder{}
 	dc.lx.reader.reset(buf)
 	//dc.json.UseNumber()
-	if err = dc.token().tok(tokCrBrOpen); err != nil {
+	if err = dc.token().tok(tkCrBrOpen); err != nil {
 		return
 	}
 	if e, err = dc.decode(pd); err != nil {
 		return
 	}
-	//if err = dc.token().tok(tokCrBrClose); err != nil {
+	//if err = dc.token().tok(tkCrBrClose); err != nil {
 	//	return
 	//}
 	return
@@ -115,7 +115,7 @@ func Decode(b []byte, pd *MessageDef) (e *Entity, err error) {
 
 func (dc *decoder) decode(pd *MessageDef) (r *Entity, err error) {
 	r = pd.NewEntity()
-	if dc.token().prob(tokCrBrClose) {
+	if dc.token().prob(tkCrBrClose) {
 		return
 	}
 	dc.putBack()
@@ -124,7 +124,7 @@ func (dc *decoder) decode(pd *MessageDef) (r *Entity, err error) {
 		if name, err = dc.token().string(); err != nil {
 			return
 		}
-		if err = dc.token().tok(tokColon); err != nil {
+		if err = dc.token().tok(tkColon); err != nil {
 			return
 		}
 		f, ok := pd.TryGetFieldByName(name)
@@ -133,10 +133,10 @@ func (dc *decoder) decode(pd *MessageDef) (r *Entity, err error) {
 		}
 		if f.Repeated {
 			if tok := dc.token(); !tok.null() {
-				if err = tok.tok(tokSqBrOpen); err != nil {
+				if err = tok.tok(tkSqBrOpen); err != nil {
 					return
 				}
-				if !tok.token().prob(tokSqBrClose) {
+				if !tok.token().prob(tkSqBrClose) {
 					dc.putBack()
 					for {
 						n := f.Reserve(r, 1)
@@ -153,12 +153,12 @@ func (dc *decoder) decode(pd *MessageDef) (r *Entity, err error) {
 							}
 							f.SetPrimitiveAt(r, n, p)
 						}
-						if !dc.token().prob(tokComma) {
+						if !dc.token().prob(tkComma) {
 							dc.putBack()
 							break
 						}
 					}
-					if err = dc.token().tok(tokSqBrClose); err != nil {
+					if err = dc.token().tok(tkSqBrClose); err != nil {
 						return
 					}
 				}
@@ -178,12 +178,12 @@ func (dc *decoder) decode(pd *MessageDef) (r *Entity, err error) {
 				f.SetPrimitive(r, p)
 			}
 		}
-		if !dc.token().prob(tokComma) {
+		if !dc.token().prob(tkComma) {
 			dc.putBack()
 			break
 		}
 	}
-	if err = dc.token().tok(tokCrBrClose); err != nil {
+	if err = dc.token().tok(tkCrBrClose); err != nil {
 		return
 	}
 	return
@@ -263,7 +263,7 @@ func (dc *decoder) decodeJsonRef(
 			return FromBytes(b, false), nil
 		}
 	case f.DataType.IsEntity():
-		if err = tok.tok(tokCrBrOpen); err != nil {
+		if err = tok.tok(tkCrBrOpen); err != nil {
 			return
 		}
 		def := pd.Registry.GetMessageDef(f.DataType)
@@ -271,7 +271,7 @@ func (dc *decoder) decodeJsonRef(
 		if nested, err = dc.decode(def); err != nil {
 			return
 		}
-		//if err = dc.token().tok(tokCrBrClose); err != nil {
+		//if err = dc.token().tok(tkCrBrClose); err != nil {
 		//	return
 		//}
 		return FromEntity(nested), nil

@@ -26,7 +26,7 @@ type (
 
 		// Represents a token that has been read the last time
 		tok struct {
-			kind token
+			kind tokenKind
 			pos  pos
 
 			// The following are the values, which may belong to current token.
@@ -36,9 +36,6 @@ type (
 			bool   bool
 		}
 	}
-
-	// Represents a kind of token.
-	token int
 )
 
 const (
@@ -58,20 +55,11 @@ const (
 	none = rune(0)
 )
 
+// The literals, which are a part of the JSON syntax.
 const (
-	tokUnknown token = iota
-	tokString
-	//tokInteger
-	//tokFloat
-	tokNumber
-	tokBool
-	tokCrBrOpen
-	tokCrBrClose
-	tokSqBrOpen
-	tokSqBrClose
-	tokColon
-	tokComma
-	tokNull
+	litTrue  = "true"
+	litFalse = "false"
+	litNull  = "null"
 )
 
 // -----------------------------------------------------------------------------
@@ -79,14 +67,14 @@ const (
 
 func (rd *reader) reset(r io.Reader) {
 	rd.rd, rd.pos = bufio.NewReader(r), pos{line: 0, col: -1}
-	rd.consume()
+	rd.accept()
 }
 
 func (rd *reader) peek() (rune, error) {
 	return rd.cur, rd.err
 }
 
-func (rd *reader) consume() {
+func (rd *reader) accept() {
 	r, _, err := rd.rd.ReadRune()
 	if err != nil {
 		if err == io.EOF {
@@ -165,22 +153,22 @@ func (lex *lexer) next() (err error) {
 		if cur != ws && cur != tab && cur != newline {
 			break
 		}
-		lex.reader.consume()
+		lex.reader.accept()
 	}
 	lex.tok.pos = lex.reader.pos
 	switch cur {
 	case '{':
-		lex.consumeTok(tokCrBrOpen)
+		lex.consumeTok(tkCrBrOpen)
 	case '}':
-		lex.consumeTok(tokCrBrClose)
+		lex.consumeTok(tkCrBrClose)
 	case '[':
-		lex.consumeTok(tokSqBrOpen)
+		lex.consumeTok(tkSqBrOpen)
 	case ']':
-		lex.consumeTok(tokSqBrClose)
+		lex.consumeTok(tkSqBrClose)
 	case ',':
-		lex.consumeTok(tokComma)
+		lex.consumeTok(tkComma)
 	case ':':
-		lex.consumeTok(tokColon)
+		lex.consumeTok(tkColon)
 	default:
 		var handled bool
 		if handled, err = lex.handleString(); handled {
@@ -196,9 +184,9 @@ func (lex *lexer) next() (err error) {
 	return
 }
 
-func (lex *lexer) consumeTok(tk token) {
+func (lex *lexer) consumeTok(tk tokenKind) {
 	lex.tok.kind = tk
-	lex.reader.consume()
+	lex.reader.accept()
 }
 
 func (lex *lexer) handleString() (handled bool, err error) {
@@ -210,14 +198,14 @@ func (lex *lexer) handleString() (handled bool, err error) {
 	if r != '"' {
 		return
 	}
-	lex.reader.consume()
+	lex.reader.accept()
 	handled = true
 IterateString:
 	for {
 		if r, err = lex.reader.peekNoEof(); err != nil {
 			return
 		}
-		lex.reader.consume()
+		lex.reader.accept()
 		switch r {
 		case '\\':
 			if r, err = lex.reader.peekNoEof(); err != nil {
@@ -225,31 +213,31 @@ IterateString:
 			}
 			switch r {
 			case '"', '\\', '/':
-				lex.reader.consume()
+				lex.reader.accept()
 				// r already contains the proper value
 			case 'b':
-				lex.reader.consume()
+				lex.reader.accept()
 				r = '\x08' // backspace
 			case 'f':
-				lex.reader.consume()
+				lex.reader.accept()
 				r = '\x0C' // form feed
 			case 'n':
-				lex.reader.consume()
+				lex.reader.accept()
 				r = '\x0A' // line feed
 			case 'r':
-				lex.reader.consume()
+				lex.reader.accept()
 				r = '\x0D' // carriage return
 			case 't':
-				lex.reader.consume()
+				lex.reader.accept()
 				r = '\x09' // tab
 			case 'u':
-				lex.reader.consume()
+				lex.reader.accept()
 				var uc [4]rune
 				for i := 0; i < len(uc); i++ {
 					if uc[i], err = lex.reader.peekHexNoEof(); err != nil {
 						return
 					}
-					lex.reader.consume()
+					lex.reader.accept()
 				}
 				var n uint64
 				n, err = strconv.ParseUint(string(uc[:]), 16, 32)
@@ -266,28 +254,27 @@ IterateString:
 		}
 		buf.WriteRune(r)
 	}
-	lex.tok.kind = tokString
+	lex.tok.kind = tkString
 	lex.tok.string = buf.String()
 	return
 }
 
 func (lex *lexer) handleNumber() (handled bool, err error) {
 	var buf strings.Builder
-	//isInteger := true // Indicates whether the number is represented by integer.
 	var r rune
 	if r, err = lex.reader.peekNoEof(); err != nil {
 		goto Error
 	}
 	if r == '-' || r == '+' {
 		buf.WriteRune(r)
-		lex.reader.consume()
+		lex.reader.accept()
 		if r, err = lex.reader.peekDecNoEof(); err != nil {
 			goto Error
 		}
 	}
 	if r == '0' {
 		buf.WriteRune(r)
-		lex.reader.consume()
+		lex.reader.accept()
 		if r, err = lex.reader.peek(); err != nil {
 			goto Error
 		}
@@ -302,7 +289,7 @@ func (lex *lexer) handleNumber() (handled bool, err error) {
 		}
 		for {
 			buf.WriteRune(r)
-			lex.reader.consume()
+			lex.reader.accept()
 			if r, err = lex.reader.peek(); err != nil {
 				goto Error
 			}
@@ -312,15 +299,14 @@ func (lex *lexer) handleNumber() (handled bool, err error) {
 		}
 	}
 	if r == '.' {
-		//isInteger = false
 		buf.WriteRune(r)
-		lex.reader.consume()
+		lex.reader.accept()
 		if r, err = lex.reader.peekDecNoEof(); err != nil {
 			goto Error
 		}
 		for {
 			buf.WriteRune(r)
-			lex.reader.consume()
+			lex.reader.accept()
 			if r, err = lex.reader.peek(); err != nil {
 				goto Error
 			}
@@ -330,15 +316,14 @@ func (lex *lexer) handleNumber() (handled bool, err error) {
 		}
 	}
 	if r == 'e' || r == 'E' {
-		//isInteger = false
 		buf.WriteRune(r)
-		lex.reader.consume()
+		lex.reader.accept()
 		if r, err = lex.reader.peekNoEof(); err != nil {
 			goto Error
 		}
 		if r == '-' || r == '+' {
 			buf.WriteRune(r)
-			lex.reader.consume()
+			lex.reader.accept()
 			if r, err = lex.reader.peekDecNoEof(); err != nil {
 				goto Error
 			}
@@ -348,7 +333,7 @@ func (lex *lexer) handleNumber() (handled bool, err error) {
 		}
 		for {
 			buf.WriteRune(r)
-			lex.reader.consume()
+			lex.reader.accept()
 			if r, err = lex.reader.peek(); err != nil {
 				goto Error
 			}
@@ -360,15 +345,8 @@ func (lex *lexer) handleNumber() (handled bool, err error) {
 Error:
 	handled = buf.Len() > 0
 	if handled && err == nil {
-		lex.tok.kind = tokNumber
+		lex.tok.kind = tkNumber
 		lex.tok.number = buf.String()
-		//if isInteger {
-		//	lex.tok.kind = tokInteger
-		//	lex.tok.int64, err = strconv.ParseInt(str, 10, 64)
-		//} else {
-		//	lex.tok.kind = tokFloat
-		//	lex.tok.number, err = strconv.ParseFloat(str, 64)
-		//}
 	}
 	return
 }
@@ -385,18 +363,18 @@ func (lex *lexer) handleKeyword() (handled bool, err error) {
 			break
 		}
 		buf.WriteRune(r)
-		lex.reader.consume()
+		lex.reader.accept()
 	}
 	handled = buf.Len() > 0
 	if handled && err == nil {
 		keyword := buf.String()
 		switch keyword {
-		case "true":
-			lex.tok.kind, lex.tok.bool = tokBool, true
-		case "false":
-			lex.tok.kind, lex.tok.bool = tokBool, false
-		case "null":
-			lex.tok.kind = tokNull
+		case litTrue:
+			lex.tok.kind, lex.tok.bool = tkBool, true
+		case litFalse:
+			lex.tok.kind, lex.tok.bool = tkBool, false
+		case litNull:
+			lex.tok.kind = tkNull
 		default:
 			err = fmt.Errorf("dymessage: value '%s' is not a valid keyword", keyword)
 		}

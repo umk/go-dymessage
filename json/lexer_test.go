@@ -82,27 +82,16 @@ func createLexerOutput(f *os.File, out io.Writer) (errlex error, err error) {
 			}
 			break
 		}
+
 		switch lex.tok.kind {
-		case tokString:
-			_, err = fmt.Fprintf(out, "%q", lex.tok.string)
-		case tokNumber:
-			_, err = fmt.Fprint(out, lex.tok.number)
-		case tokBool:
-			_, err = fmt.Fprintf(out, "%t", lex.tok.bool)
-		case tokCrBrOpen:
-			_, err = fmt.Fprint(out, "{")
-		case tokCrBrClose:
-			_, err = fmt.Fprint(out, "}")
-		case tokSqBrOpen:
-			_, err = fmt.Fprint(out, "[")
-		case tokSqBrClose:
-			_, err = fmt.Fprint(out, "]")
-		case tokColon:
-			_, err = fmt.Fprint(out, ":")
-		case tokComma:
-			_, err = fmt.Fprint(out, ",")
-		case tokNull:
-			_, err = fmt.Fprint(out, "null")
+		case tkString:
+			_, err = fmt.Fprintf(out, "%s %s", lex.tok.kind, lex.tok.string)
+		case tkNumber:
+			_, err = fmt.Fprintf(out, "%s %s", lex.tok.kind, lex.tok.number)
+		case tkBool:
+			_, err = fmt.Fprintf(out, "%s %t", lex.tok.kind, lex.tok.bool)
+		default:
+			_, err = fmt.Fprint(out, lex.tok.kind)
 		}
 		if err != nil {
 			break
