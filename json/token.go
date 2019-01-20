@@ -24,8 +24,9 @@ const (
 	tkNull
 )
 
-// messageString gets a representation of the token kind based on whether it is
-// represented by a known character sequence or can match
+// messageString gets a representation of the token kind based on whether it
+// corresponds to a known character sequence or must correspond an arbitrary
+// value.
 func (tk tokenKind) messageString() string {
 	switch tk {
 	case tkEof, tkString, tkNumber:

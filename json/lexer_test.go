@@ -71,12 +71,12 @@ func createLexerOutput(f *os.File, out io.Writer) (err error) {
 	lex.reader.reset(f)
 	for {
 		lex.next()
-		if lex.eof() {
-			break
-		}
 		if lex.err != nil {
 			_, err = fmt.Fprintf(out, "\nERROR: %s", lex.err.Error())
-			return
+			break
+		}
+		if lex.eof() {
+			break
 		}
 		switch lex.tok.kind {
 		case tkString:
