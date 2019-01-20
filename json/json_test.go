@@ -17,8 +17,6 @@ func TestJsonEncodeDecode(t *testing.T) {
 	data, err := Encode(entity, def)
 	require.NoError(t, err)
 
-	t.Log(string(data))
-
 	entity2, err := DecodeNew(data, def)
 	require.NoError(t, err)
 

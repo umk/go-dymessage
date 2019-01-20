@@ -38,7 +38,7 @@ func (tk tokenKind) messageString() string {
 func (tk tokenKind) String() string {
 	switch tk {
 	case tkEof:
-		return "eof"
+		return "EOF"
 	case tkString:
 		return "string"
 	case tkNumber:
