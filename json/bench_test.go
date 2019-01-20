@@ -27,18 +27,21 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 
 	b.Run("decode regular", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			_, err := Decode(data, def)
+			_, err := DecodeNew(data, def)
 			assert.NoError(b, err)
 		}
 	})
 }
 
-func BenchmarkMe(b *testing.B) {
+// BenchmarkReference explores other options to parse the JSON document.
+func BenchmarkReference(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 	data, err := Encode(entity, def)
 	assert.NoError(b, err)
 
-	b.Run("111", func(b *testing.B) {
+	// How much time it will take to enumerate the tokens using the
+	// standard API of json package?
+	b.Run("json.Decoder", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			buf := bytes.NewBuffer(data)
 			dec := json.NewDecoder(buf)
@@ -48,6 +51,17 @@ func BenchmarkMe(b *testing.B) {
 				if err != nil {
 					break
 				}
+			}
+		}
+	})
+
+	// How much time it will take to unmarshal the JSON into a map
+	// using the standard API of json package?
+	b.Run("json.Unmarshal", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			var entity map[string]interface{}
+			if err = json.Unmarshal(data, &entity); err != nil {
+				b.Fatal(err)
 			}
 		}
 	})

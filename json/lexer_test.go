@@ -44,12 +44,9 @@ func testSourceFile(t *testing.T, path string, positive bool) {
 	}
 	defer f.Close()
 	var builder strings.Builder
-	errlex, err := createLexerOutput(f, &builder)
-	if err != nil {
+	err = createLexerOutput(f, &builder)
+	if positive && err != nil {
 		t.Fatal(err)
-	}
-	if positive && errlex != nil {
-		t.Fatal(errlex)
 	}
 	outputPath := path + ".lex.txt"
 	if testutil.DoFix() {
@@ -69,32 +66,28 @@ func testSourceFile(t *testing.T, path string, positive bool) {
 	testutil.EqualDiff(t, expected, actual, path)
 }
 
-func createLexerOutput(f *os.File, out io.Writer) (errlex error, err error) {
+func createLexerOutput(f *os.File, out io.Writer) (err error) {
 	var lex lexer
 	lex.reader.reset(f)
 	for {
-		errlex = lex.next()
-		if errlex != nil {
-			if errlex == io.EOF {
-				errlex = nil
-			} else {
-				_, err = fmt.Fprintf(out, "\nERROR: %s", errlex.Error())
-			}
+		lex.next()
+		if lex.eof() {
 			break
 		}
-
+		if lex.err != nil {
+			_, err = fmt.Fprintf(out, "\nERROR: %s", lex.err.Error())
+			return
+		}
 		switch lex.tok.kind {
 		case tkString:
-			_, err = fmt.Fprintf(out, "%s %s", lex.tok.kind, lex.tok.string)
+			_, err = fmt.Fprintf(out, "%q", lex.tok.value)
 		case tkNumber:
-			_, err = fmt.Fprintf(out, "%s %s", lex.tok.kind, lex.tok.number)
-		case tkBool:
-			_, err = fmt.Fprintf(out, "%s %t", lex.tok.kind, lex.tok.bool)
+			_, err = fmt.Fprint(out, lex.tok.value)
 		default:
 			_, err = fmt.Fprint(out, lex.tok.kind)
 		}
 		if err != nil {
-			break
+			panic(err)
 		}
 	}
 	return
