@@ -7,18 +7,16 @@ import (
 	"unicode"
 )
 
-type (
-	lexer struct {
-		reader reader
-		err    error // Optional error occurred during the parse
-		// Represents a token that has been read the last time
-		tok struct {
-			kind  tokenKind
-			pos   pos
-			value string // Optional value of the token
-		}
+type lexer struct {
+	reader reader
+	err    error // Optional error occurred during the parse
+	// Represents a token that has been read the last time
+	tok struct {
+		kind  tokenKind
+		pos   pos
+		value string // Optional value of the token
 	}
-)
+}
 
 const (
 	// A set of characters, which must be ignored unless they
