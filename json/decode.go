@@ -1,7 +1,6 @@
 package json
 
 import (
-	"bytes"
 	"encoding/base64"
 	"errors"
 	"strconv"
@@ -17,7 +16,7 @@ type decoder struct {
 // against the provided message definition.
 func DecodeNew(b []byte, pd *MessageDef) (e *Entity, err error) {
 	var dc decoder
-	dc.lx.reader.reset(bytes.NewBuffer(b))
+	dc.lx.reader.reset(b)
 	dc.lx.next()
 	if e, err = dc.decode(pd); err == nil {
 		if !dc.lx.eof() {

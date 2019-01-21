@@ -1,13 +1,14 @@
 package json
 
 import (
-	"bufio"
 	"fmt"
 	"io"
+	"unicode/utf8"
 )
 
 type reader struct {
-	rd *bufio.Reader
+	buf []byte
+	off int
 
 	cur rune  // The character read the last time ready to be consumed
 	pos pos   // A zero-based position of the current rune
@@ -17,8 +18,9 @@ type reader struct {
 // -----------------------------------------------------------------------------
 // Reader implementation
 
-func (rd *reader) reset(r io.Reader) {
-	rd.rd, rd.pos = bufio.NewReader(r), pos{line: 0, col: -1}
+func (rd *reader) reset(buf []byte) {
+	rd.buf, rd.off = buf, 0
+	rd.pos = pos{line: 0, col: -1}
 	rd.accept()
 }
 
@@ -27,7 +29,7 @@ func (rd *reader) peek() (rune, error) {
 }
 
 func (rd *reader) accept() {
-	r, _, err := rd.rd.ReadRune()
+	r, err := rd.readRune()
 	if err != nil {
 		if err == io.EOF {
 			// The end of file must be recognized by the eof rune.
@@ -46,15 +48,43 @@ func (rd *reader) accept() {
 	if r == cr || r == lf {
 		// Checking if the newline character has another complementary
 		// character 0x0A or 0x0D, and if yes, skipping it.
-		_r, _, _err := rd.rd.ReadRune()
+		_r, _err := rd.peekRune()
 		if _err != nil {
-			_ = rd.rd.UnreadRune()
+			//
 		} else if r == _r || (_r != cr && _r != lf) {
-			_ = rd.rd.UnreadRune()
+			//
+		} else {
+			_, _ = rd.readRune()
 		}
 		r = newline
 	}
 	rd.cur, rd.err = r, nil
+}
+
+// -----------------------------------------------------------------------------
+// Buffer reading methods
+
+func (rd *reader) peekRune() (rune, error) {
+	if rd.off == len(rd.buf) {
+		return rune(0), io.EOF
+	}
+	r := rune(rd.buf[rd.off])
+	if r >= utf8.RuneSelf {
+		r, _ = utf8.DecodeRune(rd.buf[rd.off:])
+	}
+	return r, nil
+}
+
+func (rd *reader) readRune() (rune, error) {
+	if rd.off == len(rd.buf) {
+		return rune(0), io.EOF
+	}
+	r, size := rune(rd.buf[rd.off]), 1
+	if r >= utf8.RuneSelf {
+		r, size = utf8.DecodeRune(rd.buf[rd.off:])
+	}
+	rd.off += size
+	return r, nil
 }
 
 // -----------------------------------------------------------------------------

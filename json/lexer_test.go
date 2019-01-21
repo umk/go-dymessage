@@ -69,7 +69,11 @@ func processTestFile(t *testing.T, path, dir string) {
 
 func createLexerOutput(f *os.File, out io.Writer) (err error) {
 	var lex lexer
-	lex.reader.reset(f)
+	data, err := ioutil.ReadAll(f)
+	if err != nil {
+		panic(err)
+	}
+	lex.reader.reset(data)
 	for {
 		lex.next()
 		if lex.err != nil {
