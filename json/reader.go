@@ -62,6 +62,32 @@ func (rd *reader) accept() {
 }
 
 // -----------------------------------------------------------------------------
+// Buffer reading methods
+
+func (rd *reader) peekRune() (rune, error) {
+	if rd.off == len(rd.buf) {
+		return rune(0), io.EOF
+	}
+	r := rune(rd.buf[rd.off])
+	if r >= utf8.RuneSelf {
+		r, _ = utf8.DecodeRune(rd.buf[rd.off:])
+	}
+	return r, nil
+}
+
+func (rd *reader) readRune() (rune, error) {
+	if rd.off == len(rd.buf) {
+		return rune(0), io.EOF
+	}
+	r, size := rune(rd.buf[rd.off]), 1
+	if r >= utf8.RuneSelf {
+		r, size = utf8.DecodeRune(rd.buf[rd.off:])
+	}
+	rd.off += size
+	return r, nil
+}
+
+// -----------------------------------------------------------------------------
 // Ad hoc peek methods
 
 func (rd *reader) peekNoEof() (r rune, err error) {
