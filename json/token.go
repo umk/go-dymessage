@@ -10,7 +10,8 @@ type (
 )
 
 const (
-	tkEof tokenKind = iota
+	tkUndefined tokenKind = iota
+	tkEof
 	tkString
 	tkNumber
 	tkTrue

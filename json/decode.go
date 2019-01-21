@@ -37,33 +37,41 @@ func (dc *decoder) decode(pd *MessageDef) (r *Entity, err error) {
 		return
 	}
 	for {
-		var name string
-		if name, err = dc.acceptValue(tkString); err != nil {
+		if err = dc.decodeProperty(r, pd); err != nil {
 			return
-		}
-		if err = dc.accept(tkColon); err != nil {
-			return
-		}
-		f, ok := pd.TryGetFieldByName(name)
-		if !ok {
-			continue
-		}
-		if f.Repeated {
-			if dc.tryAccept(tkNull) {
-				// Leave default value in the entity field.
-			} else if err = dc.decodeRepeated(r, pd, f); err != nil {
-				return
-			}
-		} else {
-			if err = dc.decodeSingle(r, pd, f); err != nil {
-				return
-			}
 		}
 		if !dc.tryAccept(tkComma) {
 			break
 		}
 	}
 	err = dc.accept(tkCrBrClose)
+	return
+}
+
+func (dc *decoder) decodeProperty(r *Entity, pd *MessageDef) (err error) {
+	var name string
+	if name, err = dc.acceptValue(tkString); err != nil {
+		return
+	}
+	if err = dc.accept(tkColon); err != nil {
+		return
+	}
+	f, ok := pd.TryGetFieldByName(name)
+	if !ok {
+		err = dc.ignoreValue()
+		return
+	}
+	if f.Repeated {
+		if dc.tryAccept(tkNull) {
+			// Do nothing but leave default value in the entity field.
+		} else if err = dc.decodeRepeated(r, pd, f); err != nil {
+			return
+		}
+	} else {
+		if err = dc.decodeSingle(r, pd, f); err != nil {
+			return
+		}
+	}
 	return
 }
 
@@ -192,5 +200,65 @@ func (dc *decoder) decodeJsonRef(
 		}
 		return FromEntity(nested), nil
 	}
+	return
+}
+
+// -----------------------------------------------------------------------------
+// Ignore methods
+
+// ignoreValue skips the value the parser has stepped on.
+func (dc *decoder) ignoreValue() (err error) {
+	switch {
+	case dc.tryAcceptAny(tkNumber, tkString, tkNull, tkTrue, tkFalse):
+		// Do nothing.
+	case dc.probably(tkCrBrOpen):
+		err = dc.ignoreObject()
+	case dc.probably(tkSqBrOpen):
+		err = dc.ignoreArray()
+	default:
+		message := dc.createErrorMessage()
+		err = errors.New(message)
+	}
+	return
+}
+
+func (dc *decoder) ignoreObject() (err error) {
+	if err = dc.accept(tkCrBrOpen); err != nil {
+		return
+	}
+	if dc.tryAccept(tkCrBrClose) {
+		return
+	}
+	for {
+		if err = dc.acceptSeq(tkString, tkColon); err != nil {
+			return
+		}
+		if err = dc.ignoreValue(); err != nil {
+			return
+		}
+		if !dc.tryAccept(tkComma) {
+			break
+		}
+	}
+	err = dc.accept(tkCrBrClose)
+	return
+}
+
+func (dc *decoder) ignoreArray() (err error) {
+	if err = dc.accept(tkSqBrOpen); err != nil {
+		return
+	}
+	if dc.tryAccept(tkSqBrClose) {
+		return
+	}
+	for {
+		if err = dc.ignoreValue(); err != nil {
+			return
+		}
+		if !dc.tryAccept(tkComma) {
+			break
+		}
+	}
+	err = dc.accept(tkSqBrClose)
 	return
 }

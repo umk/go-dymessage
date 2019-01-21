@@ -18,7 +18,7 @@ func TestLexer(t *testing.T) {
 		panic("could not get working directory")
 	}
 	for _, dir := range []string{"positive", "negative", "indefinite"} {
-		path := filepath.Join(root, "internal/testdata", dir)
+		path := filepath.Join(root, "internal/testdata/suite", dir)
 		var paths []string
 		_ = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 			if info != nil && !info.IsDir() && filepath.Ext(path) == ".json" {
@@ -31,13 +31,14 @@ func TestLexer(t *testing.T) {
 			path := path
 			name := dir + "_" + filepath.Base(path)
 			t.Run(name, func(t *testing.T) {
-				testSourceFile(t, path, dir == "positive")
+				processTestFile(t, path, dir)
 			})
 		}
 	}
 }
 
-func testSourceFile(t *testing.T, path string, positive bool) {
+func processTestFile(t *testing.T, path, dir string) {
+	positive := dir == "positive"
 	f, err := os.Open(path)
 	if err != nil {
 		t.Fatal(err)

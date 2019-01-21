@@ -37,6 +37,12 @@ func (rd *reader) accept() {
 		}
 		return
 	}
+	if rd.cur == newline {
+		rd.pos.line++
+		rd.pos.col = 0
+	} else {
+		rd.pos.col++
+	}
 	if r == cr || r == lf {
 		// Checking if the newline character has another complementary
 		// character 0x0A or 0x0D, and if yes, skipping it.
@@ -46,11 +52,7 @@ func (rd *reader) accept() {
 		} else if r == _r || (_r != cr && _r != lf) {
 			_ = rd.rd.UnreadRune()
 		}
-		rd.pos.line++
-		rd.pos.col = 0
 		r = newline
-	} else {
-		rd.pos.col++
 	}
 	rd.cur, rd.err = r, nil
 }
