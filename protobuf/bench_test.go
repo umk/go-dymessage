@@ -12,7 +12,7 @@ import (
 	"github.com/umk/go-dymessage/protobuf/internal/testdata"
 )
 
-func BenchmarkTestEncodeRegular(b *testing.B) {
+func BenchmarkEncodeRegular(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 
 	b.Run("encode regular", func(b *testing.B) {
@@ -23,23 +23,40 @@ func BenchmarkTestEncodeRegular(b *testing.B) {
 	})
 }
 
-func BenchmarkTestDecodeRegular(b *testing.B) {
+func BenchmarkDecodeRegular(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 	data, err := Encode(entity, def)
 	assert.NoError(b, err)
 
+	// The decoder won't reuse the structures created for an existing
+	// entity.
+	b.Run("decode regular", func(b *testing.B) {
+		for i := 0; i < b.N; i++ {
+			_, err := Decode(data, def, def.NewEntity())
+			assert.NoError(b, err)
+		}
+	})
+
 	message := def.NewEntity()
 
-	b.Run("decode regular", func(b *testing.B) {
+	b.Run("decode regular existing", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_, err := Decode(data, def, message)
 			assert.NoError(b, err)
 		}
 	})
+}
 
-	// The decoder won't reuse the structures created for an existing
-	// entity.
-	b.Run("decode regular new entity", func(b *testing.B) {
+func BenchmarkDecodeRegularShuffled(b *testing.B) {
+	def, entity := ArrangeEncodeDecode()
+	shuffleRegistryFields(def.Registry)
+
+	data, err := Encode(entity, def)
+	assert.NoError(b, err)
+
+	// The optimization to find the fields won't be applied in contrast to
+	// the regular decode.
+	b.Run("decode regular shuffled", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			_, err := Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
@@ -47,27 +64,8 @@ func BenchmarkTestDecodeRegular(b *testing.B) {
 	})
 }
 
-func BenchmarkTestDecodeRegularShuffled(b *testing.B) {
-	def, entity := ArrangeEncodeDecode()
-	shuffleRegistryFields(def.Registry)
-
-	data, err := Encode(entity, def)
-	assert.NoError(b, err)
-
-	message := def.NewEntity()
-
-	// The optimization to find the fields won't be applied in contrast to
-	// the regular decode.
-	b.Run("decode regular shuffled", func(b *testing.B) {
-		for i := 0; i < b.N; i++ {
-			_, err := Decode(data, def, message)
-			assert.NoError(b, err)
-		}
-	})
-}
-
 // Provided for reference.
-func BenchmarkTestProtoEncodeRegular(b *testing.B) {
+func BenchmarkReferenceEncode(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 	data, err := Encode(entity, def)
 	assert.NoError(b, err)
@@ -77,7 +75,7 @@ func BenchmarkTestProtoEncodeRegular(b *testing.B) {
 	assert.NoError(b, err)
 
 	buf := proto.NewBuffer(data)
-	b.Run("encode protobuf regular", func(b *testing.B) {
+	b.Run("proto.Buffer.Marshal", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err := buf.Marshal(&message)
 			assert.NoError(b, err)
@@ -86,14 +84,14 @@ func BenchmarkTestProtoEncodeRegular(b *testing.B) {
 }
 
 // Provided for reference.
-func BenchmarkTestProtoDecodeRegular(b *testing.B) {
+func BenchmarkReferenceDecode(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 	data, err := Encode(entity, def)
 	assert.NoError(b, err)
 
 	message := testdata.TestMessageRegular{}
 
-	b.Run("decode protobuf regular", func(b *testing.B) {
+	b.Run("proto.Unmarshal", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
 			err = proto.Unmarshal(data, &message)
 			assert.NoError(b, err)
@@ -104,7 +102,7 @@ func BenchmarkTestProtoDecodeRegular(b *testing.B) {
 // -----------------------------------------------------------------------------
 // Parallel benchmarks
 
-func BenchmarkTestEncodeParallel(b *testing.B) {
+func BenchmarkEncodeParallel(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 
 	b.RunParallel(func(pb *testing.PB) {
@@ -115,32 +113,30 @@ func BenchmarkTestEncodeParallel(b *testing.B) {
 	})
 }
 
-func BenchmarkTestDecodeParallel(b *testing.B) {
+func BenchmarkDecodeParallel(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 	data, err := Encode(entity, def)
 	assert.NoError(b, err)
 
 	b.RunParallel(func(pb *testing.PB) {
-		message := def.NewEntity()
 		for pb.Next() {
-			_, err := Decode(data, def, message)
+			_, err := Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})
 }
 
-func BenchmarkTestEncodeDecodeParallel(b *testing.B) {
+func BenchmarkEncodeDecodeParallel(b *testing.B) {
 	def, entity := ArrangeEncodeDecode()
 	data, err := Encode(entity, def)
 	assert.NoError(b, err)
 
 	b.RunParallel(func(pb *testing.PB) {
-		message := def.NewEntity()
 		for pb.Next() {
 			var err error
 			_, err = Encode(entity, def)
 			assert.NoError(b, err)
-			_, err = Decode(data, def, message)
+			_, err = Decode(data, def, def.NewEntity())
 			assert.NoError(b, err)
 		}
 	})

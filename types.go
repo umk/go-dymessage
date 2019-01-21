@@ -39,6 +39,9 @@ func (dt DataType) IsRefType() bool {
 	}
 }
 
+// IsEntity gets a value indicating whether the data type refers to an entity.
+func (dt DataType) IsEntity() bool { return (dt & DtEntity) != 0 }
+
 // GetWidthInBytes returns the value indicating how many bytes of memory does
 // the type require. This method is only valid for primitive types.
 func (dt DataType) GetWidthInBytes() int {

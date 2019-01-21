@@ -98,3 +98,23 @@ func (md *MessageDef) GetField(tag uint64) *MessageFieldDef {
 	}
 	panic(fmt.Sprintf("entity doesn't contain the field with tag %d", tag))
 }
+
+// TryGetFieldByName gets the field with specified name from the message
+// definition. If field doesn't exist, it returns the false flag.
+func (md *MessageDef) TryGetFieldByName(name string) (*MessageFieldDef, bool) {
+	for _, def := range md.Fields {
+		if def.Name == name {
+			return def, true
+		}
+	}
+	return nil, false
+}
+
+// GetFieldByName gets the field with specified name from the message
+// definition. If field doesn't exist, the method panics.
+func (md *MessageDef) GetFieldByName(name string) *MessageFieldDef {
+	if def, ok := md.TryGetFieldByName(name); ok {
+		return def
+	}
+	panic(fmt.Sprintf("entity doesn't contain the field with name %q", name))
+}
