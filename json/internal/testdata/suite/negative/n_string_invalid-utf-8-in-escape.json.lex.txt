@@ -1,0 +1,2 @@
+[
+ERROR: dymessage: '�' is not a valid hex digit

@@ -1,0 +1,2 @@
+[-123.123
+ERROR: dymessage: value 'foo' is not a valid keyword

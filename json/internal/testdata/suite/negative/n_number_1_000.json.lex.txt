@@ -1,0 +1,2 @@
+[1
+ERROR: dymessage: unexpected digit after a leading zero
