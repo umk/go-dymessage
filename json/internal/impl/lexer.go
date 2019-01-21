@@ -1,4 +1,4 @@
-package json
+package impl
 
 import (
 	"fmt"
@@ -7,14 +7,14 @@ import (
 	"unicode"
 )
 
-type lexer struct {
+type Lexer struct {
 	reader reader
-	err    error // Optional error occurred during the parse
+	Err    error // Optional error occurred during the parse
 	// Represents a token that has been read the last time
-	tok struct {
-		kind  tokenKind
-		pos   pos
-		value string // Optional value of the token
+	Tok struct {
+		Kind  TokenKind
+		Pos   Pos
+		Value string // Optional value of the token
 	}
 }
 
@@ -38,20 +38,24 @@ const (
 // -----------------------------------------------------------------------------
 // Lexer implementation
 
-// eof gets a value indicating whether an end of file has been reached.
-func (lex *lexer) eof() bool { return lex.tok.kind == tkEof }
+// Reset prepares the lexer for new deserialization by assigning it with a
+// buffer that contains the input JSON.
+func (lex *Lexer) Reset(buf []byte) { lex.reader.reset(buf) }
 
-func (lex *lexer) next() {
+// Eof gets a value indicating whether an end of file has been reached.
+func (lex *Lexer) Eof() bool { return lex.Tok.Kind == TkEof }
+
+func (lex *Lexer) Next() {
 	var err error
 	var cur rune
 	for {
 		cur, err = lex.reader.peek()
 		if err != nil {
-			lex.err = err
+			lex.Err = err
 			return
 		}
 		if cur == eof {
-			lex.tok.kind = tkEof
+			lex.Tok.Kind = TkEof
 			return
 		}
 		if cur != ws && cur != tab && cur != newline {
@@ -59,20 +63,20 @@ func (lex *lexer) next() {
 		}
 		lex.reader.accept()
 	}
-	lex.tok.pos = lex.reader.pos
+	lex.Tok.Pos = lex.reader.pos
 	switch cur {
 	case '{':
-		lex.acceptTok(tkCrBrOpen)
+		lex.acceptTok(TkCrBrOpen)
 	case '}':
-		lex.acceptTok(tkCrBrClose)
+		lex.acceptTok(TkCrBrClose)
 	case '[':
-		lex.acceptTok(tkSqBrOpen)
+		lex.acceptTok(TkSqBrOpen)
 	case ']':
-		lex.acceptTok(tkSqBrClose)
+		lex.acceptTok(TkSqBrClose)
 	case ',':
-		lex.acceptTok(tkComma)
+		lex.acceptTok(TkComma)
 	case ':':
-		lex.acceptTok(tkColon)
+		lex.acceptTok(TkColon)
 	default:
 		var parsed bool
 		if parsed, err = lex.tryParseString(); parsed {
@@ -85,16 +89,16 @@ func (lex *lexer) next() {
 			err = fmt.Errorf("dymessage: unexpected character '%c'", cur)
 		}
 	}
-	lex.err = err
+	lex.Err = err
 	return
 }
 
-func (lex *lexer) acceptTok(tk tokenKind) {
-	lex.tok.kind = tk
+func (lex *Lexer) acceptTok(tk TokenKind) {
+	lex.Tok.Kind = tk
 	lex.reader.accept()
 }
 
-func (lex *lexer) tryParseString() (parsed bool, err error) {
+func (lex *Lexer) tryParseString() (parsed bool, err error) {
 	var buf strings.Builder
 	var r rune
 	if r, err = lex.reader.peekNoEof(); err != nil {
@@ -159,12 +163,12 @@ IterateString:
 		}
 		buf.WriteRune(r)
 	}
-	lex.tok.kind = tkString
-	lex.tok.value = buf.String()
+	lex.Tok.Kind = TkString
+	lex.Tok.Value = buf.String()
 	return
 }
 
-func (lex *lexer) tryParseNumber() (parsed bool, err error) {
+func (lex *Lexer) tryParseNumber() (parsed bool, err error) {
 	var buf strings.Builder
 	var r rune
 	if r, err = lex.reader.peekNoEof(); err != nil {
@@ -250,13 +254,13 @@ func (lex *lexer) tryParseNumber() (parsed bool, err error) {
 Error:
 	parsed = buf.Len() > 0
 	if parsed && err == nil {
-		lex.tok.kind = tkNumber
-		lex.tok.value = buf.String()
+		lex.Tok.Kind = TkNumber
+		lex.Tok.Value = buf.String()
 	}
 	return
 }
 
-func (lex *lexer) tryParseKeyword() (parsed bool, err error) {
+func (lex *Lexer) tryParseKeyword() (parsed bool, err error) {
 	var buf strings.Builder
 	var r rune
 	for {
@@ -272,16 +276,16 @@ func (lex *lexer) tryParseKeyword() (parsed bool, err error) {
 	}
 	parsed = buf.Len() > 0
 	if parsed && err == nil {
-		lex.tok.value = buf.String()
-		switch lex.tok.value {
+		lex.Tok.Value = buf.String()
+		switch lex.Tok.Value {
 		case "true":
-			lex.tok.kind = tkTrue
+			lex.Tok.Kind = TkTrue
 		case "false":
-			lex.tok.kind = tkFalse
+			lex.Tok.Kind = TkFalse
 		case "null":
-			lex.tok.kind = tkNull
+			lex.Tok.Kind = TkNull
 		default:
-			err = fmt.Errorf("dymessage: value '%s' is not a valid keyword", lex.tok.value)
+			err = fmt.Errorf("dymessage: value '%s' is not a valid keyword", lex.Tok.Value)
 		}
 	}
 	return

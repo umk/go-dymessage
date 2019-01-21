@@ -1,4 +1,4 @@
-package json
+package impl
 
 import (
 	"fmt"
@@ -18,7 +18,7 @@ func TestLexer(t *testing.T) {
 		panic("could not get working directory")
 	}
 	for _, dir := range []string{"positive", "negative", "indefinite"} {
-		path := filepath.Join(root, "internal/testdata/suite", dir)
+		path := filepath.Join(root, "../testdata/suite", dir)
 		var paths []string
 		_ = filepath.Walk(path, func(path string, info os.FileInfo, err error) error {
 			if info != nil && !info.IsDir() && filepath.Ext(path) == ".json" {
@@ -68,28 +68,28 @@ func processTestFile(t *testing.T, path, dir string) {
 }
 
 func createLexerOutput(f *os.File, out io.Writer) (err error) {
-	var lex lexer
+	var lex Lexer
 	data, err := ioutil.ReadAll(f)
 	if err != nil {
 		panic(err)
 	}
 	lex.reader.reset(data)
 	for {
-		lex.next()
-		if lex.err != nil {
-			_, err = fmt.Fprintf(out, "\nERROR: %s", lex.err.Error())
+		lex.Next()
+		if lex.Err != nil {
+			_, err = fmt.Fprintf(out, "\nERROR: %s", lex.Err.Error())
 			break
 		}
-		if lex.eof() {
+		if lex.Eof() {
 			break
 		}
-		switch lex.tok.kind {
-		case tkString:
-			_, err = fmt.Fprintf(out, "%q", lex.tok.value)
-		case tkNumber:
-			_, err = fmt.Fprint(out, lex.tok.value)
+		switch lex.Tok.Kind {
+		case TkString:
+			_, err = fmt.Fprintf(out, "%q", lex.Tok.Value)
+		case TkNumber:
+			_, err = fmt.Fprint(out, lex.Tok.Value)
 		default:
-			_, err = fmt.Fprint(out, lex.tok.kind)
+			_, err = fmt.Fprint(out, lex.Tok.Kind)
 		}
 		if err != nil {
 			panic(err)

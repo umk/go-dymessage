@@ -6,21 +6,22 @@ import (
 	"strconv"
 
 	. "github.com/umk/go-dymessage"
+	"github.com/umk/go-dymessage/json/internal/impl"
 )
 
 type decoder struct {
-	lx lexer
+	lx impl.Lexer
 }
 
 // DecodeNew transforms the JSON representation of the message to dynamic entity
 // against the provided message definition.
 func DecodeNew(b []byte, pd *MessageDef) (e *Entity, err error) {
 	var dc decoder
-	dc.lx.reader.reset(b)
-	dc.lx.next()
+	dc.lx.Reset(b)
+	dc.lx.Next()
 	if e, err = dc.decode(pd); err == nil {
-		if !dc.lx.eof() {
-			message := dc.createErrorMessage(tkEof)
+		if !dc.lx.Eof() {
+			message := dc.createErrorMessage(impl.TkEof)
 			err = errors.New(message)
 		}
 	}
@@ -28,31 +29,31 @@ func DecodeNew(b []byte, pd *MessageDef) (e *Entity, err error) {
 }
 
 func (dc *decoder) decode(pd *MessageDef) (r *Entity, err error) {
-	if err = dc.accept(tkCrBrOpen); err != nil {
+	if err = dc.accept(impl.TkCrBrOpen); err != nil {
 		return
 	}
 	r = pd.NewEntity()
-	if dc.tryAccept(tkCrBrClose) {
+	if dc.tryAccept(impl.TkCrBrClose) {
 		return
 	}
 	for {
 		if err = dc.decodeProperty(r, pd); err != nil {
 			return
 		}
-		if !dc.tryAccept(tkComma) {
+		if !dc.tryAccept(impl.TkComma) {
 			break
 		}
 	}
-	err = dc.accept(tkCrBrClose)
+	err = dc.accept(impl.TkCrBrClose)
 	return
 }
 
 func (dc *decoder) decodeProperty(r *Entity, pd *MessageDef) (err error) {
 	var name string
-	if name, err = dc.acceptValue(tkString); err != nil {
+	if name, err = dc.acceptValue(impl.TkString); err != nil {
 		return
 	}
-	if err = dc.accept(tkColon); err != nil {
+	if err = dc.accept(impl.TkColon); err != nil {
 		return
 	}
 	f, ok := pd.TryGetFieldByName(name)
@@ -61,7 +62,7 @@ func (dc *decoder) decodeProperty(r *Entity, pd *MessageDef) (err error) {
 		return
 	}
 	if f.Repeated {
-		if dc.tryAccept(tkNull) {
+		if dc.tryAccept(impl.TkNull) {
 			// Do nothing but leave default value in the entity field.
 		} else if err = dc.decodeRepeated(r, pd, f); err != nil {
 			return
@@ -94,10 +95,10 @@ func (dc *decoder) decodeSingle(
 
 func (dc *decoder) decodeRepeated(
 	r *Entity, pd *MessageDef, f *MessageFieldDef) (err error) {
-	if err = dc.accept(tkSqBrOpen); err != nil {
+	if err = dc.accept(impl.TkSqBrOpen); err != nil {
 		return
 	}
-	if dc.tryAccept(tkSqBrClose) {
+	if dc.tryAccept(impl.TkSqBrClose) {
 		return
 	}
 	for {
@@ -115,11 +116,11 @@ func (dc *decoder) decodeRepeated(
 			}
 			f.SetPrimitiveAt(r, n, p)
 		}
-		if !dc.tryAccept(tkComma) {
+		if !dc.tryAccept(impl.TkComma) {
 			break
 		}
 	}
-	err = dc.accept(tkSqBrClose)
+	err = dc.accept(impl.TkSqBrClose)
 	return
 }
 
@@ -130,7 +131,7 @@ func (dc *decoder) decodeJsonValue(f *MessageFieldDef) (pr Primitive, err error)
 		} else {
 			return FromBool(b), nil
 		}
-	} else if n, err := dc.acceptValue(tkNumber); err != nil {
+	} else if n, err := dc.acceptValue(impl.TkNumber); err != nil {
 		return pr, err
 	} else {
 		switch f.DataType {
@@ -173,18 +174,18 @@ func (dc *decoder) decodeJsonValue(f *MessageFieldDef) (pr Primitive, err error)
 
 func (dc *decoder) decodeJsonRef(
 	pd *MessageDef, f *MessageFieldDef) (ref Reference, err error) {
-	if dc.tryAccept(tkNull) {
+	if dc.tryAccept(impl.TkNull) {
 		return ref, nil
 	}
 	switch {
 	case f.DataType == DtString:
 		var str string
-		if str, err = dc.acceptValue(tkString); err == nil {
+		if str, err = dc.acceptValue(impl.TkString); err == nil {
 			return FromString(str), nil
 		}
 	case f.DataType == DtBytes:
 		var str string
-		if str, err = dc.acceptValue(tkString); err != nil {
+		if str, err = dc.acceptValue(impl.TkString); err != nil {
 			return
 		}
 		var b []byte
@@ -208,11 +209,16 @@ func (dc *decoder) decodeJsonRef(
 // ignoreValue skips the value the parser has stepped on.
 func (dc *decoder) ignoreValue() (err error) {
 	switch {
-	case dc.tryAcceptAny(tkNumber, tkString, tkNull, tkTrue, tkFalse):
+	case dc.tryAcceptAny(
+		impl.TkNumber,
+		impl.TkString,
+		impl.TkNull,
+		impl.TkTrue,
+		impl.TkFalse):
 		// Do nothing.
-	case dc.probably(tkCrBrOpen):
+	case dc.probably(impl.TkCrBrOpen):
 		err = dc.ignoreObject()
-	case dc.probably(tkSqBrOpen):
+	case dc.probably(impl.TkSqBrOpen):
 		err = dc.ignoreArray()
 	default:
 		message := dc.createErrorMessage()
@@ -222,42 +228,42 @@ func (dc *decoder) ignoreValue() (err error) {
 }
 
 func (dc *decoder) ignoreObject() (err error) {
-	if err = dc.accept(tkCrBrOpen); err != nil {
+	if err = dc.accept(impl.TkCrBrOpen); err != nil {
 		return
 	}
-	if dc.tryAccept(tkCrBrClose) {
+	if dc.tryAccept(impl.TkCrBrClose) {
 		return
 	}
 	for {
-		if err = dc.acceptSeq(tkString, tkColon); err != nil {
+		if err = dc.acceptSeq(impl.TkString, impl.TkColon); err != nil {
 			return
 		}
 		if err = dc.ignoreValue(); err != nil {
 			return
 		}
-		if !dc.tryAccept(tkComma) {
+		if !dc.tryAccept(impl.TkComma) {
 			break
 		}
 	}
-	err = dc.accept(tkCrBrClose)
+	err = dc.accept(impl.TkCrBrClose)
 	return
 }
 
 func (dc *decoder) ignoreArray() (err error) {
-	if err = dc.accept(tkSqBrOpen); err != nil {
+	if err = dc.accept(impl.TkSqBrOpen); err != nil {
 		return
 	}
-	if dc.tryAccept(tkSqBrClose) {
+	if dc.tryAccept(impl.TkSqBrClose) {
 		return
 	}
 	for {
 		if err = dc.ignoreValue(); err != nil {
 			return
 		}
-		if !dc.tryAccept(tkComma) {
+		if !dc.tryAccept(impl.TkComma) {
 			break
 		}
 	}
-	err = dc.accept(tkSqBrClose)
+	err = dc.accept(impl.TkSqBrClose)
 	return
 }
