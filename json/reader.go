@@ -3,7 +3,6 @@ package json
 import (
 	"fmt"
 	"io"
-	"unicode/utf8"
 )
 
 type reader struct {
@@ -29,7 +28,7 @@ func (rd *reader) peek() (rune, error) {
 }
 
 func (rd *reader) accept() {
-	r, err := rd.readRune()
+	r, err := rd.acceptRune()
 	if err != nil {
 		if err == io.EOF {
 			// The end of file must be recognized by the eof rune.
@@ -54,37 +53,11 @@ func (rd *reader) accept() {
 		} else if r == _r || (_r != cr && _r != lf) {
 			//
 		} else {
-			_, _ = rd.readRune()
+			_, _ = rd.acceptRune()
 		}
 		r = newline
 	}
 	rd.cur, rd.err = r, nil
-}
-
-// -----------------------------------------------------------------------------
-// Buffer reading methods
-
-func (rd *reader) peekRune() (rune, error) {
-	if rd.off == len(rd.buf) {
-		return rune(0), io.EOF
-	}
-	r := rune(rd.buf[rd.off])
-	if r >= utf8.RuneSelf {
-		r, _ = utf8.DecodeRune(rd.buf[rd.off:])
-	}
-	return r, nil
-}
-
-func (rd *reader) readRune() (rune, error) {
-	if rd.off == len(rd.buf) {
-		return rune(0), io.EOF
-	}
-	r, size := rune(rd.buf[rd.off]), 1
-	if r >= utf8.RuneSelf {
-		r, size = utf8.DecodeRune(rd.buf[rd.off:])
-	}
-	rd.off += size
-	return r, nil
 }
 
 // -----------------------------------------------------------------------------
