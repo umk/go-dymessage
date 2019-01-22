@@ -1,13 +1,12 @@
 package impl
 
 import (
-	"io"
 	"unicode/utf8"
 )
 
-func (rd *reader) peekRune() (r rune, err error) {
+func (rd *reader) peekRune() (r rune) {
 	if rd.off == len(rd.buf) {
-		err = io.EOF
+		r = eof
 	} else {
 		r = rune(rd.buf[rd.off])
 		if r >= utf8.RuneSelf {
@@ -17,9 +16,10 @@ func (rd *reader) peekRune() (r rune, err error) {
 	return
 }
 
-func (rd *reader) acceptRune() (r rune, err error) {
+func (rd *reader) acceptRune() (r rune) {
 	if rd.off == len(rd.buf) {
-		return r, io.EOF
+		r = eof
+		return
 	} else {
 		var size int
 		r, size = rune(rd.buf[rd.off]), 1

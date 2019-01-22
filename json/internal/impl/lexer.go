@@ -13,27 +13,10 @@ type Lexer struct {
 	// Represents a token that has been read the last time
 	Tok struct {
 		Kind  TokenKind
-		Pos   Pos
+		Pos   Pos // A zero-based line and column indexes of the token
 		Value string // Optional value of the token
 	}
 }
-
-const (
-	// A set of characters, which must be ignored unless they
-	// are a part of a string.
-
-	ws  = '\x20' // whitespace
-	tab = '\x09' // tab
-	lf  = '\x0A' // line feed
-	cr  = '\x0D' // carriage return
-
-	// A default representation of a newline, which doesn't depend on how
-	// the newlines are represented in the input string.
-	newline = lf
-
-	// A rune, which doesn't represent any specific value.
-	eof = rune(0)
-)
 
 // -----------------------------------------------------------------------------
 // Lexer implementation
@@ -49,16 +32,11 @@ func (lex *Lexer) Next() {
 	var err error
 	var cur rune
 	for {
-		cur, err = lex.reader.peek()
-		if err != nil {
-			lex.Err = err
-			return
-		}
-		if cur == eof {
+		if cur = lex.reader.peek(); cur == eof {
 			lex.Tok.Kind = TkEof
 			return
 		}
-		if cur != ws && cur != tab && cur != newline {
+		if cur != ws && cur != tab && cur != nl {
 			break
 		}
 		lex.reader.accept()
@@ -172,35 +150,35 @@ func (lex *Lexer) tryParseNumber() (parsed bool, err error) {
 	var buf strings.Builder
 	var r rune
 	if r, err = lex.reader.peekNoEof(); err != nil {
-		goto Error
+		goto DoneOrError
 	}
 	if r == '-' || r == '+' {
 		buf.WriteRune(r)
 		lex.reader.accept()
 		if r, err = lex.reader.peekDecNoEof(); err != nil {
-			goto Error
+			goto DoneOrError
 		}
 	}
 	if r == '0' {
 		buf.WriteRune(r)
 		lex.reader.accept()
-		if r, err = lex.reader.peek(); err != nil {
-			goto Error
+		if r = lex.reader.peek(); r == eof {
+			goto DoneOrError
 		}
 		if isDecDigit(r) {
 			err = fmt.Errorf("dymessage: unexpected digit after a leading zero")
-			goto Error
+			goto DoneOrError
 		}
 	} else {
 		if !isDecDigit(r) {
 			err = fmt.Errorf("dymessage: '%c' is not a valid decimal digit", r)
-			goto Error
+			goto DoneOrError
 		}
 		for {
 			buf.WriteRune(r)
 			lex.reader.accept()
-			if r, err = lex.reader.peek(); err != nil {
-				goto Error
+			if r = lex.reader.peek(); r == eof {
+				goto DoneOrError
 			}
 			if !isDecDigit(r) {
 				break
@@ -211,13 +189,13 @@ func (lex *Lexer) tryParseNumber() (parsed bool, err error) {
 		buf.WriteRune(r)
 		lex.reader.accept()
 		if r, err = lex.reader.peekDecNoEof(); err != nil {
-			goto Error
+			goto DoneOrError
 		}
 		for {
 			buf.WriteRune(r)
 			lex.reader.accept()
-			if r, err = lex.reader.peek(); err != nil {
-				goto Error
+			if r = lex.reader.peek(); r == eof {
+				goto DoneOrError
 			}
 			if !isDecDigit(r) {
 				break
@@ -228,30 +206,30 @@ func (lex *Lexer) tryParseNumber() (parsed bool, err error) {
 		buf.WriteRune(r)
 		lex.reader.accept()
 		if r, err = lex.reader.peekNoEof(); err != nil {
-			goto Error
+			goto DoneOrError
 		}
 		if r == '-' || r == '+' {
 			buf.WriteRune(r)
 			lex.reader.accept()
 			if r, err = lex.reader.peekDecNoEof(); err != nil {
-				goto Error
+				goto DoneOrError
 			}
 		} else if !isDecDigit(r) {
 			err = fmt.Errorf("dymessage: '%c' is not a valid decimal digit", r)
-			goto Error
+			goto DoneOrError
 		}
 		for {
 			buf.WriteRune(r)
 			lex.reader.accept()
-			if r, err = lex.reader.peek(); err != nil {
-				goto Error
+			if r = lex.reader.peek(); r == eof {
+				goto DoneOrError
 			}
 			if !isDecDigit(r) {
 				break
 			}
 		}
 	}
-Error:
+DoneOrError:
 	parsed = buf.Len() > 0
 	if parsed && err == nil {
 		lex.Tok.Kind = TkNumber
@@ -264,8 +242,7 @@ func (lex *Lexer) tryParseKeyword() (parsed bool, err error) {
 	var buf strings.Builder
 	var r rune
 	for {
-		r, err = lex.reader.peek()
-		if err != nil {
+		if r = lex.reader.peek(); r == eof {
 			break
 		}
 		if !unicode.IsLetter(r) {
