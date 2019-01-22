@@ -11,7 +11,6 @@ import (
 
 type encoder struct {
 	buf  bytes.Buffer
-	json *json.Encoder
 }
 
 // Encode transforms the data from the dynamic entity to a buffer, containing
@@ -21,7 +20,6 @@ func Encode(e *Entity, pd *MessageDef) ([]byte, error) {
 	helpers.DataTypesMustMatch(e, pd)
 	var ec encoder
 	ec.buf.Grow(1024)
-	ec.json = json.NewEncoder(&ec.buf)
 	if err := ec.encode(e, pd); err != nil {
 		return nil, err
 	}
@@ -32,7 +30,7 @@ func (ec *encoder) encode(e *Entity, pd *MessageDef) (err error) {
 	ec.buf.WriteRune('{')
 	n := len(pd.Fields)
 	for i, f := range pd.Fields {
-		if err = ec.json.Encode(f.Name); err != nil {
+		if err = ec.encodeToBuf(f.Name); err != nil {
 			return
 		}
 		ec.buf.WriteRune(':')
@@ -47,7 +45,7 @@ func (ec *encoder) encode(e *Entity, pd *MessageDef) (err error) {
 			if item != nil {
 				err = ec.encodeJsonRef(item, pd, f)
 			} else {
-				err = ec.json.Encode(nil)
+				err = ec.encodeToBuf(nil)
 			}
 		} else {
 			value := f.GetPrimitive(e)
@@ -64,19 +62,19 @@ func (ec *encoder) encode(e *Entity, pd *MessageDef) (err error) {
 func (ec *encoder) encodeJsonValue(value Primitive, f *MessageFieldDef) (err error) {
 	switch f.DataType {
 	case DtInt32:
-		err = ec.json.Encode(value.ToInt32())
+		err = ec.encodeToBuf(value.ToInt32())
 	case DtInt64:
-		err = ec.json.Encode(value.ToInt64())
+		err = ec.encodeToBuf(value.ToInt64())
 	case DtUint32:
-		err = ec.json.Encode(value.ToUint32())
+		err = ec.encodeToBuf(value.ToUint32())
 	case DtUint64:
-		err = ec.json.Encode(value.ToUint64())
+		err = ec.encodeToBuf(value.ToUint64())
 	case DtFloat32:
-		err = ec.json.Encode(value.ToFloat32())
+		err = ec.encodeToBuf(value.ToFloat32())
 	case DtFloat64:
-		err = ec.json.Encode(value.ToFloat64())
+		err = ec.encodeToBuf(value.ToFloat64())
 	case DtBool:
-		err = ec.json.Encode(value.ToBool())
+		err = ec.encodeToBuf(value.ToBool())
 	default:
 		panic(f.DataType)
 	}
@@ -106,9 +104,9 @@ func (ec *encoder) encodeJsonRef(e *Entity, pd *MessageDef, f *MessageFieldDef) 
 	switch f.DataType {
 	case DtBytes:
 		str := base64.StdEncoding.EncodeToString(e.Data)
-		err = ec.json.Encode(str)
+		err = ec.encodeToBuf(str)
 	case DtString:
-		err = ec.json.Encode(string(e.Data))
+		err = ec.encodeToBuf(string(e.Data))
 	case DtEntity:
 		def := pd.Registry.GetMessageDef(f.DataType)
 		return ec.encode(e, def)
@@ -121,7 +119,7 @@ func (ec *encoder) encodeJsonRef(e *Entity, pd *MessageDef, f *MessageFieldDef) 
 func (ec *encoder) encodeJsonRefs(e *Entity, pd *MessageDef, f *MessageFieldDef) (err error) {
 	data := e.Entities[f.Offset]
 	if data == nil {
-		err = ec.json.Encode(nil)
+		err = ec.encodeToBuf(nil)
 	} else {
 		ec.buf.WriteRune('[')
 		n := len(data.Entities)
@@ -136,4 +134,13 @@ func (ec *encoder) encodeJsonRefs(e *Entity, pd *MessageDef, f *MessageFieldDef)
 		ec.buf.WriteRune(']')
 	}
 	return
+}
+
+func (ec *encoder) encodeToBuf(v interface{}) error {
+	if data, err := json.Marshal(v); err != nil {
+		return err
+	} else {
+		ec.buf.Write(data)
+		return nil
+	}
 }
