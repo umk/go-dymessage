@@ -1,0 +1,1 @@
+This directory contains the random JSON files to test how will the JSON parser skip the object properties it didn't recognize.
