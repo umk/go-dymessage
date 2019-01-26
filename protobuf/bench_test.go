@@ -74,10 +74,9 @@ func BenchmarkReferenceEncode(b *testing.B) {
 	err = proto.Unmarshal(data, &message)
 	assert.NoError(b, err)
 
-	buf := proto.NewBuffer(data)
-	b.Run("proto.Buffer.Marshal", func(b *testing.B) {
+	b.Run("proto.Marshal", func(b *testing.B) {
 		for i := 0; i < b.N; i++ {
-			err := buf.Marshal(&message)
+			_, err := proto.Marshal(&message)
 			assert.NoError(b, err)
 		}
 	})
