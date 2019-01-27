@@ -14,13 +14,17 @@ const (
 	DtBool
 	DtString
 	DtBytes
+
+	// A flag, which must be OR'ed with an index of an entity definition in
+	// the registry. Use IsEntity method to determine whether the data type
+	// is an entity.
 	DtEntity DataType = 1 << 31
 )
 
 const (
-	TypeWidth8  = 1
-	TypeWidth32 = 4
-	TypeWidth64 = 8
+	TypeWidth8  = 1 // 1 byte
+	TypeWidth32 = 4 // 4 bytes
+	TypeWidth64 = 8 // 8 bytes
 )
 
 // IsRefType gets a value indicating whether the type represents a reference

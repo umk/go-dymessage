@@ -15,8 +15,8 @@ type (
 
 	// Represents a definition of the message structure.
 	MessageDef struct {
-		Namespace string
-		Name      string
+		Namespace string // An optional namespace of the message definition
+		Name      string // Name of the message definition
 
 		Registry *Registry // A registry this definition belongs to
 		DataType DataType  // An entity data type represented by this instance

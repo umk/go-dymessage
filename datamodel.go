@@ -47,6 +47,7 @@ func GetDefaultReference() Reference { return Reference{} }
 // -----------------------------------------------------------------------------
 // Entity implementation
 
+// Reset resets the entity type and content, making it available for reuse.
 func (e *Entity) Reset() {
 	if e.DataType == DtNone {
 		e.Data, e.Entities = e.Data[:0], e.Entities[:0]

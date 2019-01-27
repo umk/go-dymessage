@@ -31,6 +31,10 @@ func NewRegistryBuilder() *RegistryBuilder {
 	}
 }
 
+// ForMessageDef returns a builder for the message definition, which corresponds
+// to the provided key. The key can be represented by an arbitrary value. Two
+// calls to this method will return the builder for the same message definition,
+// if the keys are equal, following Go's rules for interface comparison.
 func (rb *RegistryBuilder) ForMessageDef(key interface{}) *MessageDefBuilder {
 	if def, ok := rb.defs[key]; ok {
 		return def
@@ -49,6 +53,8 @@ func (rb *RegistryBuilder) ForMessageDef(key interface{}) *MessageDefBuilder {
 	return def
 }
 
+// Build creates the registry. Any subsequent calls to the builder will lead to
+// undefined behavior.
 func (rb *RegistryBuilder) Build() *Registry {
 	for i, def := range rb.registry.Defs {
 		if def == nil {
@@ -102,6 +108,9 @@ func (mb *MessageDefBuilder) ExtendField(ext func(*MessageFieldDef)) *MessageDef
 
 func (mb *MessageDefBuilder) GetDataType() DataType { return mb.message.DataType }
 
+// Build builds the message definition. If not called, the Build method of the
+// RegistryBuilder will panic. Any subsequent calls to the builder will lead to
+// undefined behavior.
 func (mb *MessageDefBuilder) Build() *MessageDef {
 	if mb.registry.Defs[mb.index] != nil {
 		panic(fmt.Sprintf("message definition at %v has already been built", mb.index))
