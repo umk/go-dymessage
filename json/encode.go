@@ -10,7 +10,7 @@ import (
 )
 
 type encoder struct {
-	buf  bytes.Buffer
+	buf bytes.Buffer
 }
 
 // Encode transforms the data from the dynamic entity to a buffer, containing

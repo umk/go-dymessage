@@ -4,8 +4,8 @@ type reader struct {
 	buf []byte
 	off int
 
-	cur rune  // The character read the last time and now ready to be consumed
-	pos Pos   // A zero-based position of the current rune
+	cur rune // The character read the last time and now ready to be consumed
+	pos Pos  // A zero-based position of the current rune
 }
 
 const (

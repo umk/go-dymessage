@@ -13,7 +13,7 @@ type Lexer struct {
 	// Represents a token that has been read the last time
 	Tok struct {
 		Kind  TokenKind
-		Pos   Pos // A zero-based line and column indexes of the token
+		Pos   Pos    // A zero-based line and column indexes of the token
 		Value string // Optional value of the token
 	}
 }
