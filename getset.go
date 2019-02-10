@@ -1,8 +1,8 @@
 package dymessage
 
 import (
+	"encoding/binary"
 	"fmt"
-	"github.com/umk/go-dymessage/internal/memory"
 )
 
 func (f *MessageFieldDef) GetPrimitive(e *Entity) Primitive {
@@ -80,10 +80,10 @@ func (f *MessageFieldDef) getPrimitive(e *Entity, off int) Primitive {
 	case TypeWidth8:
 		value = uint64(e.Data[off])
 	case TypeWidth32:
-		v32 := memory.GetByteOrder().Uint32(e.Data[off : off+4])
+		v32 := binary.LittleEndian.Uint32(e.Data[off : off+4])
 		value = uint64(v32)
 	case TypeWidth64:
-		value = memory.GetByteOrder().Uint64(e.Data[off : off+8])
+		value = binary.LittleEndian.Uint64(e.Data[off : off+8])
 	default:
 		panic(fmt.Sprintf("unexpected size of the field: %v", sz))
 	}
@@ -96,9 +96,9 @@ func (f *MessageFieldDef) setPrimitive(e *Entity, off int, value Primitive) {
 	case TypeWidth8:
 		e.Data[off] = byte(value)
 	case TypeWidth32:
-		memory.GetByteOrder().PutUint32(e.Data[off:off+4], uint32(value))
+		binary.LittleEndian.PutUint32(e.Data[off:off+4], uint32(value))
 	case TypeWidth64:
-		memory.GetByteOrder().PutUint64(e.Data[off:off+8], uint64(value))
+		binary.LittleEndian.PutUint64(e.Data[off:off+8], uint64(value))
 	default:
 		panic(fmt.Sprintf("unexpected size of the field: %v", sz))
 	}
