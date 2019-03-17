@@ -1,4 +1,4 @@
-package grpc
+package typecod
 
 import (
 	"fmt"
@@ -25,7 +25,7 @@ func NewEncoder(reg *dymessage.Registry) *Encoder {
 	return &Encoder{reg: reg, types: types}
 }
 
-func (ec *Encoder) Encode(value *dymessage.Entity) (*any.Any, error) {
+func (ec *Encoder) EncodeAny(value *dymessage.Entity) (*any.Any, error) {
 	def := ec.reg.GetMessageDef(value.DataType)
 	if data, err := protobuf.Encode(value, def); err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func (ec *Encoder) Encode(value *dymessage.Entity) (*any.Any, error) {
 	}
 }
 
-func (ec *Encoder) Decode(value *any.Any) (*dymessage.Entity, error) {
+func (ec *Encoder) DecodeAny(value *any.Any) (*dymessage.Entity, error) {
 	if name, err := ptypes.AnyMessageName(value); err != nil {
 		return nil, err
 	} else if def, ok := ec.types[name]; !ok {
