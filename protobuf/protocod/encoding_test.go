@@ -1,4 +1,4 @@
-package typecod
+package protocod
 
 import (
 	"testing"
@@ -9,7 +9,7 @@ import (
 
 func TestEncodeDecode(t *testing.T) {
 	def, entity := ArrangeEncodeDecode()
-	cache := NewTypeCache(def.Registry)
+	cache := NewQnameCache(def.Registry)
 	// Encoding
 	any, err := EncodeAny(entity, cache)
 	require.NoError(t, err)
@@ -24,7 +24,7 @@ func TestEncodeDecode(t *testing.T) {
 
 func TestDecodeUnknownType(t *testing.T) {
 	def, entity := ArrangeEncodeDecode()
-	cache := NewTypeCache(def.Registry)
+	cache := NewQnameCache(def.Registry)
 	// Encoding
 	any, err := EncodeAny(entity, cache)
 	require.NoError(t, err)
