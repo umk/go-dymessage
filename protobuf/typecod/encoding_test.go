@@ -9,27 +9,27 @@ import (
 
 func TestEncodeDecode(t *testing.T) {
 	def, entity := ArrangeEncodeDecode()
-	encoder := NewEncoder(def.Registry)
+	cache := NewTypeCache(def.Registry)
 	// Encoding
-	any, err := encoder.EncodeAny(entity)
+	any, err := EncodeAny(entity, cache)
 	require.NoError(t, err)
 	// Decoding
-	entity, err = encoder.DecodeAny(any)
+	entity, err = DecodeAny(any, cache)
 	require.NoError(t, err)
 	AssertEncodeDecode(t, def, entity)
 	// Encoding again
-	any, err = encoder.EncodeAny(entity)
+	any, err = EncodeAny(entity, cache)
 	require.NoError(t, err)
 }
 
 func TestDecodeUnknownType(t *testing.T) {
 	def, entity := ArrangeEncodeDecode()
-	encoder := NewEncoder(def.Registry)
+	cache := NewTypeCache(def.Registry)
 	// Encoding
-	any, err := encoder.EncodeAny(entity)
+	any, err := EncodeAny(entity, cache)
 	require.NoError(t, err)
-	// Decoding with corrupted type URL
+	// Decoding with an unknown type URL
 	any.TypeUrl = any.TypeUrl + "Unknown"
-	entity, err = encoder.DecodeAny(any)
+	entity, err = DecodeAny(any, cache)
 	require.Error(t, err)
 }
